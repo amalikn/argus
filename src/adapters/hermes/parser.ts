@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as readline from 'readline';
 import { AgentEvent, Confidence } from '../../core/models/agentEvent';
 import { AgentSession, AgentSourceDescriptor, ParseDiagnostic, emptySession } from '../../core/models/agentSession';
+import { pricing } from '../../core/pricing/pricingProvider';
 
 const PROVIDER = 'hermes';
 
@@ -105,6 +106,41 @@ function pathFrom(args: unknown): string | undefined {
   return undefined;
 }
 
+
+/**
+ * Keys any client might use to persist the token counts its model provider returned.
+ *
+ * IMPORTANT DISTINCTION. Tokens are consumed on every Hermes turn - it calls a model API, and the sessions record
+ * `model` and `base_url` to prove it. What the audited store contains is no record of the counts the provider
+ * returned: Hermes does not persist them. So `tokenUsage: false` means "this client discards the usage response",
+ * NOT "no tokens were used". The counts exist upstream at the model provider; they are simply not in the evidence
+ * this tool reads.
+ *
+ * That framing decides what a fix looks like. It is a Hermes logging gap, closable by Hermes persisting what it
+ * already receives - so the adapter LOOKS on every record rather than hard-coding the absence, and the flag flips on
+ * its own the day that changes. See docs/adapters/hermes-source-audit.md.
+ */
+const USAGE_KEYS = [
+  'usage', 'token_usage', 'tokens', 'prompt_tokens', 'completion_tokens',
+  'input_tokens', 'output_tokens', 'total_tokens', 'cached_input_tokens',
+] as const;
+
+const CONTEXT_WINDOW_KEYS = ['model_context_window', 'context_window', 'max_context_tokens'] as const;
+
+/** Read token counts off a record if any provider-shaped usage field is present. */
+function usageFrom(record: Record<string, unknown>): Record<string, unknown> | undefined {
+  const nested = record.usage ?? record.token_usage;
+  if (nested && typeof nested === 'object') {
+    return nested as Record<string, unknown>;
+  }
+  for (const key of USAGE_KEYS) {
+    if (typeof record[key] === 'number') {
+      return record;
+    }
+  }
+  return undefined;
+}
+
 interface Accumulator {
   events: AgentEvent[];
   diagnostics: ParseDiagnostic[];
@@ -118,13 +154,15 @@ interface Accumulator {
   sawNetwork: boolean;
   sawDelegation: boolean;
   sawReasoning: boolean;
+  sawUsage: boolean;
+  contextWindow?: number;
 }
 
 function newAccumulator(): Accumulator {
   return {
     events: [], diagnostics: [], sequence: 0, callNames: new Map(),
     sawShell: false, sawShellOutput: false, sawRead: false, sawWrite: false,
-    sawEdit: false, sawNetwork: false, sawDelegation: false, sawReasoning: false,
+    sawEdit: false, sawNetwork: false, sawDelegation: false, sawReasoning: false, sawUsage: false,
   };
 }
 
@@ -187,6 +225,27 @@ function addMessage(acc: Accumulator, message: HermesMessage, sessionId: string)
       confidence: 'exact' as Confidence,
     });
     return;
+  }
+
+  // Look for usage on every record, whatever its role. Absent in the audited store; detected rather than assumed.
+  const usage = usageFrom(message as unknown as Record<string, unknown>);
+  if (usage) {
+    acc.sawUsage = true;
+    acc.events.push({
+      ...base,
+      id: `${base.id}:usage`,
+      kind: 'usage.tokens',
+      inputTokens: typeof usage.input_tokens === 'number' ? usage.input_tokens : undefined,
+      outputTokens: typeof usage.output_tokens === 'number' ? usage.output_tokens : undefined,
+      cachedInputTokens: typeof usage.cached_input_tokens === 'number' ? usage.cached_input_tokens : undefined,
+      confidence: 'exact' as Confidence,
+    });
+  }
+  for (const key of CONTEXT_WINDOW_KEYS) {
+    const value = (message as unknown as Record<string, unknown>)[key];
+    if (typeof value === 'number') {
+      acc.contextWindow = value;
+    }
   }
 
   // assistant
@@ -287,17 +346,21 @@ function finish(session: AgentSession, acc: Accumulator): AgentSession {
     fileEdits: acc.sawEdit,
     mcpCalls: false,
     subagents: acc.sawDelegation,
-    // NO TOKEN USAGE EXISTS IN EITHER HERMES FORMAT. Searched every record in the audited store for usage,
-    // token_usage, tokens, prompt_tokens, input_tokens, total_tokens and cost: zero hits. Cost is therefore
-    // false regardless of model - not because the model is unpriceable, but because there is nothing to
-    // multiply. A cost view built on an assumed token count would be an invention.
-    tokenUsage: false,
-    cost: false,
-    contextMetrics: false,
+    // DERIVED, not asserted. No record in the store audited on 20260901 persisted the usage its model provider
+    // returned, so in practice these are false for every Hermes session today. That is a statement about what
+    // HERMES RECORDS, not about what was consumed: every turn calls a model and spends tokens. The adapter looks
+    // on every record rather than hard-coding the absence, so the flag flips the day Hermes starts persisting them.
+    //
+    // Cost needs BOTH counts and a priceable model. deepseek-v4-flash, which Hermes runs, IS in the vendored table -
+    // so the missing half is the counts, and it is missing at the client rather than at the price list.
+    tokenUsage: acc.sawUsage,
+    cost: acc.sawUsage && pricing.hasPricing(session.model),
+    contextMetrics: acc.contextWindow !== undefined,
     reasoningMetadata: acc.sawReasoning,
   };
-  // Metrics deliberately absent rather than zeroed: undefined means the source does not expose it.
-  session.metrics = {};
+  // Metrics stay undefined unless something was actually read. undefined means the source does not expose it;
+  // zero would mean it reported zero, and those are different claims.
+  session.metrics = { contextWindowTokens: acc.contextWindow };
   return session;
 }
 

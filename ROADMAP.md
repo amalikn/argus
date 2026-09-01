@@ -17,6 +17,22 @@ Three halts are mandatory. At each, stop and report; do not proceed without an e
 | Stop 2 | M3    | Claude parity green — every fixture normalizes identically to the pre-refactor snapshot              |
 | Stop 3 | M6    | Codex historical parse plus live watch against real local rollouts, with the large-file budget met   |
 
+## Provider priority
+
+**Claude Code and OpenAI Codex are the priority. Hermes is third.**
+
+This is a product decision, not a technical one, and it ranks the remaining work:
+
+| Provider     | Priority | Why                                                                                                                                                                        |
+| ------------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Claude Code  | First    | The reference implementation, and the only provider currently viewable. Its parity is the gate every refactor passes through                                               |
+| OpenAI Codex | First    | Rich evidence — real exit codes, token counts, a usable type discriminant — and the largest sessions, which is where an observability tool earns its keep                  |
+| Hermes       | Third    | Adapter complete and correct, but the evidence is thinner: no persisted token counts, personal-conversation content that cannot be fixtured from real data, and an         |
+|              |          |   installed build four months behind upstream                                                                                                                              |
+
+What this means concretely: the generic event renderer is scoped to make **Codex** viewable first. Hermes viewability falls out of the same work rather than driving it, and further Hermes investment
+waits until the two priority providers are fully usable.
+
 ## Scope tiers
 
 - **Mandatory — M1 to M6.** Claude parity plus Codex. Shippable on its own.

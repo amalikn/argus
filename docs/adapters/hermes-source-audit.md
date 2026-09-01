@@ -10,7 +10,7 @@ Milestone 7 deliverable. Produced 2026-09-01 by inspecting the live local store 
 - [The mirror format: `*.jsonl`](#the-mirror-format-jsonl)
 - [Session id derivation: the filename lies 31 percent of the time](#session-id-derivation-the-filename-lies-31-percent-of-the-time)
 - [Tool calls carry results, and shell exit codes are real](#tool-calls-carry-results-and-shell-exit-codes-are-real)
-- [No token usage exists anywhere](#no-token-usage-exists-anywhere)
+- [Hermes does not persist the usage its model provider returns](#hermes-does-not-persist-the-usage-its-model-provider-returns)
 - [Malformed records are real here, unlike Claude](#malformed-records-are-real-here-unlike-claude)
 - [The databases add nothing worth reading](#the-databases-add-nothing-worth-reading)
 - [Profiles](#profiles)
@@ -107,13 +107,20 @@ Tool vocabulary by call count: `terminal` (724), `read_file` (345), `patch` (170
 Mapping: `terminal` and `execute_code` to `shell.command`; `read_file` to `file.read`; `write_file` to `file.write`; `patch` to `file.edit`; `browser_*` to `network.tool`; the rest to `tool.call`. No
 `mcp__`-prefixed names appear, so `mcpCalls` is false for this store.
 
-## No token usage exists anywhere
+## Hermes does not persist the usage its model provider returns
 
 Searched every record in both formats for `usage`, `token_usage`, `tokens`, `prompt_tokens`, `input_tokens`, `total_tokens` and `cost`. **Zero hits.**
 
+**State this precisely, because the short version is wrong.** Tokens are consumed on every Hermes turn: each session records a `model` and a `base_url`, and 228 of 243 ran `deepseek-v4-flash` against
+a provider API that returns usage in its response. Hermes discards that response field rather than writing it to the session. So the finding is *this client does not persist the counts*, not *no
+tokens were used* — and the counts still exist upstream at the model provider, outside anything this tool can read.
+
+That distinction decides what a fix looks like: it is a Hermes logging gap, closable by Hermes persisting what it already receives, not a limitation of the observability tool. `response_store.db`
+would have been the natural place for it and is empty.
+
 Consequences for the capability flags, and they are not small:
 
-- `tokenUsage: false` and `contextMetrics: false` for every Hermes session in this store.
+- `tokenUsage: false` and `contextMetrics: false` for every Hermes session in this store — read as "not recorded", never as "not consumed".
 - `cost: false`, regardless of model. Not because the model is unpriceable — `deepseek-v4-flash` is in the vendored pricing table — but because there are no token counts to multiply. A cost view built
   from an assumed token count would be an invention.
 - `llama3-groq-tool-use:8b` is additionally absent from the pricing table, being a local Ollama model. Even if usage appeared, that model would still yield `undefined`.

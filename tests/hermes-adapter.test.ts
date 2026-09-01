@@ -215,3 +215,46 @@ describe('HermesAdapter mirror parsing', () => {
     expect(s.diagnostics.some((d) => d.code === 'malformed-lines')).toBe(true);
   });
 });
+
+describe('Hermes usage capability is derived, not asserted', () => {
+  // The audit found no usage field anywhere in the store, which is why every session reports false. But that is a
+  // DATED NEGATIVE FINDING about one version, not a permanent property of the provider. The adapter therefore LOOKS
+  // on every record. This test proves the detection path works, so a future Hermes that starts reporting counts
+  // flips the flag on its own rather than the adapter continuing to report false from a comment.
+  it('flips tokenUsage on when a record carries usage', async () => {
+    const p = join(home, 'sessions', 'session_with_usage.json');
+    writeFileSync(p, JSON.stringify({
+      session_id: 'with-usage', model: 'deepseek-v4-flash', platform: 'cli',
+      session_start: '2026-09-02T00:00:00', last_updated: '2026-09-02T00:01:00',
+      system_prompt: 'x', tools: [], message_count: 2,
+      messages: [
+        { role: 'user', content: 'hi', timestamp: '2026-09-02T00:00:00' },
+        {
+          role: 'assistant', content: 'ok', timestamp: '2026-09-02T00:00:30', finish_reason: 'stop',
+          usage: { input_tokens: 100, output_tokens: 20, cached_input_tokens: 5 },
+          model_context_window: 128000,
+        },
+      ],
+    }));
+
+    const s = await adapter.parse({
+      id: 'with-usage', providerId: 'hermes',
+      source: { providerId: 'hermes', clientName: 'Hermes', sourceKind: 'custom', sourcePath: p },
+    });
+
+    expect(s.capabilities.tokenUsage).toBe(true);
+    expect(s.capabilities.contextMetrics).toBe(true);
+    // Cost needs BOTH counts and a priceable model. deepseek-v4-flash is in the vendored table, so with counts
+    // present it becomes computable — which is exactly the state the audit found absent.
+    expect(s.capabilities.cost).toBe(true);
+    const usage = s.events.find((e: any) => e.kind === 'usage.tokens') as any;
+    expect(usage.inputTokens).toBe(100);
+    expect(s.metrics?.contextWindowTokens).toBe(128000);
+  });
+
+  it('still reports false on the real fixtures, which carry no usage', async () => {
+    const s = await adapter.parse(snapshot('01-snapshot-basic.json'));
+    expect(s.capabilities.tokenUsage).toBe(false);
+    expect(s.capabilities.cost).toBe(false);
+  });
+});

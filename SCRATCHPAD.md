@@ -113,7 +113,8 @@ discoverable, parseable, watchable and scale-tested. The UI reads provider ident
 
 ## Next actions
 
-- Decide whether to take Milestone 9 to 11, or to stop at a shippable three-provider parse layer with no viewer for the two new providers.
+- Run the extension in an Extension Development Host — never done, and every gate so far is static.
+- Then the generic event renderer, targeting Codex viewability.
 - Consider the generic event renderer now that two real provider shapes exist to design against.
 
 ---
