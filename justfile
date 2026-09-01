@@ -97,6 +97,14 @@ fmt-doc FILE:
     {{node}} /Volumes/Data/_ai/_scripts/scripts_stuff/vscode_extensions/shared/table-reflow/cli.mjs {{FILE}} --width 200 --measure-rendered --in-place
     {{python}} ~/.agents/scripts/markdown-rewrap/rewrap.py {{FILE}} --width 200 --update
 
+# Fail early rather than falling back to the host interpreter.
+_require-venv:
+    @test -x "{{python}}" || { echo "venv missing at {{python}} — run: just setup-python" >&2; exit 1; }
+
+# Governance coherence checks. Must exit 0 before durable work is called complete.
+check: _require-venv
+    {{python}} scripts/check_governance.py
+
 # Show how far the fork has diverged from the recorded upstream baseline.
 diff-baseline:
     git diff --stat baseline-upstream-argus..HEAD

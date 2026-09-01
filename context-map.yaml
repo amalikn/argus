@@ -1,0 +1,359 @@
+version: 1
+project:
+  name: '{{PROJECT_SLUG}}'
+  context_policy: AI_NAVIGATION.md is the human-readable router; this file is the
+    machine-readable routing map.
+bootstrap:
+  required_first_read:
+  - AGENTS.md
+  - AI_NAVIGATION.md
+  - context-map.yaml
+  - CHANGELOG.md
+authority_order:
+- path: .archcore/adr
+  type: architecture_decisions
+  authority: highest
+- path: .archcore/rules
+  type: durable_rules
+  authority: highest
+- path: .archcore/specs
+  type: design_contracts
+  authority: highest
+- path: .archcore/guides
+  type: operating_guides
+  authority: high
+- path: .archcore/plans
+  type: approved_plans
+  authority: high
+- path: AGENTS.md
+  type: agent_instructions
+  authority: high
+- path: CLAUDE.md
+  type: claude_specific_instructions
+  authority: high
+- path: AI_NAVIGATION.md
+  type: context_router
+  authority: high
+- path: context-map.yaml
+  type: machine_routing_map
+  authority: high
+- path: CHANGELOG.md
+  type: project_history
+  authority: medium_high
+- path: ARCHITECTURE.md
+  type: architecture_overview
+  authority: medium_high
+- path: ROADMAP.md
+  type: roadmap
+  authority: medium_high
+- path: memory-bank/activeContext.md
+  type: active_context
+  authority: medium
+- path: memory-bank/progress.md
+  type: progress_state
+  authority: medium
+- path: memory-bank/decisionLog.md
+  type: working_decision_log
+  authority: medium
+- path: SCRATCHPAD.md
+  type: transient_notes
+  authority: low
+- path: ARCHCORE_PROMOTION_CANDIDATES.md
+  type: promotion_candidates
+  authority: generated_support
+context_sources:
+  archcore:
+    enabled: true
+    root: .archcore
+    read_first_for:
+    - architecture_decision
+    - governance_rule
+    - design_contract
+    - implementation_plan
+    - operating_procedure
+    - durable_project_truth
+  memory_bank:
+    enabled: true
+    root: memory-bank
+    files:
+      active_context: memory-bank/activeContext.md
+      progress: memory-bank/progress.md
+      decisions: memory-bank/decisionLog.md
+      patterns: memory-bank/systemPatterns.md
+      open_questions: memory-bank/openQuestions.md
+  generated:
+    graphify:
+      enabled: true
+      root: graphify-out
+      preferred_files:
+      - graphify-out/GRAPH_REPORT.md
+      - graphify-out/graph.json
+    repomix:
+      enabled: true
+      root: .ai-context
+      preferred_files:
+      - .ai-context/governance-pack.md
+      - .ai-context/repo-pack.md
+routing:
+  architecture:
+    description: Architecture, design, topology, components, boundaries, trade-offs.
+    read:
+    - .archcore/adr
+    - .archcore/specs
+    - ARCHITECTURE.md
+    - architecture.md
+    - docs/**/*.md
+    avoid_as_authority:
+    - SCRATCHPAD.md
+    - scratchpad.md
+  planning:
+    description: Roadmap, work breakdown, current status, next steps.
+    read:
+    - .archcore/plans
+    - ARCHCORE_PROMOTION_CANDIDATES.md
+    - ROADMAP.md
+    - roadmap.md
+    - CHANGELOG.md
+    - memory-bank/progress.md
+    - memory-bank/activeContext.md
+    - SCRATCHPAD.md
+  governance:
+    description: Agent behaviour, project rules, file update rules, workflow rules.
+    read:
+    - AGENTS.md
+    - CLAUDE.md
+    - AI_NAVIGATION.md
+    - context-map.yaml
+    - CHANGELOG.md
+    - .archcore/rules
+    - ARCHCORE_PROMOTION_CANDIDATES.md
+  implementation:
+    description: Code, scripts, configs, tests, automation.
+    read:
+    - AGENTS.md
+    - AI_NAVIGATION.md
+    - context-map.yaml
+    - .archcore/specs
+    - .archcore/rules
+    - src/**
+    - scripts/**
+    - tests/**
+    tools:
+      preferred:
+      - serena
+      - graphify
+      - repomix
+      optional:
+      - semgrep
+      - markdownlint
+      - vale
+  scripts:
+    purpose: Project-local scripts, automation, task runners, and executable workflows.
+    read_first:
+    - justfile
+    - Justfile
+    - scripts/README.md
+    - Taskfile.yml
+    - Makefile
+    - package.json
+    generated_support:
+    - graphify-out
+    - .ai-context
+    rules:
+    - Respect existing canonical runner first.
+    - Prefer just --list and just <task> when a justfile exists.
+    - Read scripts/README.md before running raw scripts.
+    - Treat uncataloged scripts as unknown safety.
+    - Do not run destructive scripts without explicit review.
+    - Run scripts/check_governance.py before claiming durable work complete; when
+      it fails, fix the project, not the check.
+  automation:
+    purpose: Repeatable operational workflows and project task entrypoints.
+    read_first:
+    - justfile
+    - Justfile
+    - scripts/README.md
+    - Taskfile.yml
+    - Makefile
+    - package.json
+    - docs/automation.md
+    rules:
+    - Prefer cataloged commands.
+    - Prefer just when a justfile exists.
+    - Confirm inputs, outputs, side effects, and safety before execution.
+  documentation:
+    description: README, docs, architecture docs, user guides.
+    read:
+    - README.md
+    - CHANGELOG.md
+    - docs/**/*.md
+    - ARCHITECTURE.md
+    - architecture.md
+    - .archcore/guides
+    - .archcore/specs
+    - memory-bank/activeContext.md
+  troubleshooting:
+    description: Issue investigation, debugging, root cause analysis.
+    read:
+    - memory-bank/activeContext.md
+    - memory-bank/progress.md
+    - SCRATCHPAD.md
+    - scratchpad.md
+    - docs/**/*.md
+    - logs/**
+    - reports/**
+update_rules:
+  durable_decision:
+    update:
+    - .archcore/adr
+    also_consider:
+    - ARCHITECTURE.md
+    - architecture.md
+    - memory-bank/decisionLog.md
+  durable_rule:
+    update:
+    - .archcore/rules
+    also_consider:
+    - AGENTS.md
+    - AI_NAVIGATION.md
+  design_contract:
+    update:
+    - .archcore/specs
+    also_consider:
+    - ARCHITECTURE.md
+    - architecture.md
+    - docs/**/*.md
+  operating_procedure:
+    update:
+    - .archcore/guides
+    also_consider:
+    - README.md
+    - docs/**/*.md
+  plan_change:
+    update:
+    - .archcore/plans
+    - ROADMAP.md
+    - roadmap.md
+    - memory-bank/progress.md
+  working_context_change:
+    update:
+    - memory-bank/activeContext.md
+  temporary_note:
+    update:
+    - SCRATCHPAD.md
+  routing_change:
+    update:
+    - AI_NAVIGATION.md
+    - context-map.yaml
+    - AGENTS.md
+  governance_history:
+    update:
+    - CHANGELOG.md
+  new_artifact_class:
+    update:
+    - scripts/check_governance.py
+    also_consider:
+    - AGENTS.md
+    - scripts/README.md
+  governance_navigation:
+    AGENTS.md:
+      companions:
+      - AI_NAVIGATION.md
+      - context-map.yaml
+      - scripts/README.md
+    AI_NAVIGATION.md:
+      companions:
+      - context-map.yaml
+    context-map.yaml:
+      companions:
+      - AI_NAVIGATION.md
+    scripts/README.md:
+      companions:
+      - AGENTS.md
+      - context-map.yaml
+    new_script_added:
+      companions:
+      - scripts/README.md
+      - AGENTS.md
+      - justfile
+drift_policy:
+  on_conflict:
+    action: stop_and_report
+    required_output:
+    - conflicting_files
+    - higher_authority_source
+    - recommended_fix
+    - assumptions
+  scratchpad_rule:
+    authoritative: false
+    promotion_required_for_durable_truth: true
+generated_context_policy:
+  regenerate_after:
+  - architecture_change
+  - major_doc_change
+  - roadmap_restructure
+  - new_archcore_documents
+  - significant_code_restructure
+  commands:
+    graphify: graphify update .
+    repomix_governance: repomix --config repomix.config.json
+audit_checks:
+  governance_file_presence:
+  - README.md
+  - AGENTS.md
+  - CLAUDE.md
+  - AI_NAVIGATION.md
+  - context-map.yaml
+  - CHANGELOG.md
+  version_consistency:
+    description: Verify managed block version strings match current skill version.
+    action: report_mismatch
+  companion_update_completeness:
+    description: When a governance file changes, verify all companion files in update_rules
+      were also updated.
+    action: report_missing
+  generated_output_policy:
+    description: Verify Graphify and Repomix outputs are classified as generated support,
+      not canonical truth.
+    action: report_violation
+  task_runner_consistency:
+    description: Verify cataloged tasks in scripts/README.md match actual script files.
+    action: report_drift
+  no_stale_references:
+    description: Detect references to removed tools, old task runners, or superseded
+      governance assumptions.
+    action: report_stale
+promotion_rules:
+  archcore:
+    allowed_init_modes:
+    - bootstrap
+    - navigation-add
+    - refresh
+    content_write_modes:
+    - promote
+    required_authorization: true
+    candidates_report: ARCHCORE_PROMOTION_CANDIDATES.md
+    extract_heuristics_source: patterns/archcore-routing.md
+    exclusion:
+    - CHANGELOG.md (history only)
+    - generated files (.ai-context/, graphify-out/)
+    - unmarked SCRATCHPAD sections
+    - draft/obsolete roadmap items
+context_recovery:
+  procedure:
+  - Read AI_NAVIGATION.md first for navigation map.
+  - Load .archcore/ context if present (durable truth).
+  - 'Regenerate graphify-out/ with: graphify update .'
+  - 'Regenerate .ai-context/ with: repomix --config repomix.config.json'
+  - Verify SCRATCHPAD.md has current state. If empty, populate from memory-keeper
+    / mcp-project-context.
+  - Verify CHANGELOG.md is current.
+  - Verify AI_NAVIGATION.md and context-map.yaml companion consistency.
+  evidence_label: Context recovered at <timestamp> via skill-ai-it context-recovery
+    procedure.
+answer_contract:
+  require_source_paths: true
+  unsupported_answer: not found in project context
+  distinguish_assumptions: true
+  do_not_invent_state: true
+skill_ai_it_version: 2026-08-11-governance-checks-layer-v1

@@ -1,0 +1,43 @@
+{
+  "output": {
+    "filePath": ".ai-context/governance-pack.md",
+    "style": "markdown"
+  },
+  "include": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "AI_NAVIGATION.md",
+    "README.md",
+    "ARCHITECTURE.md",
+    "architecture.md",
+    "CONVENTIONS.md",
+    "ROADMAP.md",
+    "roadmap.md",
+    "SCRATCHPAD.md",
+    "CHANGELOG.md",
+    "ARCHCORE_PROMOTION_CANDIDATES.md",
+    "context-map.yaml",
+    "scripts/README.md",
+    "scripts/**",
+    "justfile",
+    "Justfile",
+    "Taskfile.yml",
+    "Makefile",
+    "package.json",
+    "memory-bank/**/*.md",
+    ".archcore/**/*.md",
+    "docs/**/*.md"
+  ],
+  "ignore": [
+    "node_modules/**",
+    ".git/**",
+    "dist/**",
+    "build/**",
+    "cache/**",
+    "runtime/**",
+    "__pycache__/**",
+    ".venv/**",
+    "graphify-out/**",
+    ".ai-context/**"
+  ]
+}

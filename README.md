@@ -4,31 +4,6 @@
 
 <p align="center"><strong>Argus — Claude Code Agent Monitoring &amp; Observability on VSCode.</strong></p>
 
-<p align="center">
-  <img src="https://img.shields.io/badge/VS%20Code-1.80%2B-0078d7?logo=visualstudiocode&logoColor=white" alt="VS Code 1.80+" />
-  <img src="https://img.shields.io/badge/runtime-TypeScript-3178c6?logo=typescript&logoColor=white" alt="TypeScript runtime" />
-  <img src="https://img.shields.io/badge/webview-React%2019-61dafb?logo=react&logoColor=black" alt="React 19 webview" />
-  <img src="https://img.shields.io/badge/bundler-Vite%207-646cff?logo=vite&logoColor=white" alt="Vite 7" />
-  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-f28c28" alt="macOS, Linux, Windows" />
-  <img src="https://img.shields.io/badge/license-MIT-0f7ae5" alt="MIT license" />
-</p>
-
-<p align="center">
-  <a href="https://github.com/yessGlory17/argus/issues"><img src="https://img.shields.io/badge/Report%20a%20Bug-000000?style=for-the-badge&logo=github&logoColor=white" alt="Report a Bug" /></a>
-  <a href="https://github.com/yessGlory17/argus/issues"><img src="https://img.shields.io/badge/Request%20a%20Feature-5865F2?style=for-the-badge&logo=github&logoColor=white" alt="Request a Feature" /></a>
-</p>
-
-<p align="center"><strong>⭐ If Argus helps you ship better Claude Code sessions, a GitHub Star goes a long way.</strong></p>
-
-<p align="center">
-  <a href="#quick-start">Quick Start</a> ·
-  <a href="#features">Features</a> ·
-  <a href="#screenshots">Screenshots</a> ·
-  <a href="#architecture">Architecture</a> ·
-  <a href="#configuration">Configuration</a> ·
-  <a href="#contributing">Contributing</a>
-</p>
-
 # Argus
 
 **Argus** is an open-source VS Code extension that brings deep monitoring and observability to your Claude Code agent sessions. It reads the JSONL transcripts that Claude Code writes to `~/.claude/projects/`, parses every tool call, prompt, and token, and turns them into a coherent, inspectable picture of what your agent actually did — step by step, file by file, dollar by dollar.
