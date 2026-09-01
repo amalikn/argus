@@ -1,0 +1,3 @@
+Correction: the Scope line reading "Both the  and the rare  spelling are read." lost two words to shell backtick expansion when the message was written. It should read: "Both the name and the rare tool_name spelling are read."
+
+Recorded as a note rather than by amending, because the commit was already pushed and rewriting published history to restore two words is not worth it.
