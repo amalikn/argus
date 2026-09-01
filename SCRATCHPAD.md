@@ -21,7 +21,7 @@ explicitly marked KEEP.
 
 ## Current state
 
-**Phase:** Milestones 1 to 7 complete and pushed. Stops 1, 2 and 3 all reported green. Milestone 8, the Hermes adapter, is next; its shape is settled by the Milestone 7 audit.
+**Phase:** Milestones 1 to 8 complete and pushed. All three providers run behind the adapter contract. Milestones 9 to 11 remain and are all marked de-scopable.
 
 The fork lives at `amalikn/argus` on branch `feat/multi-agent-observability`, with the unmodified upstream preserved at tag `baseline-upstream-argus`. All six quality gates now pass, where the
 baseline had one that could not run at all. Claude runs behind the adapter contract with its parity snapshots intact, cost resolves through one provider-neutral pricing table, and Codex is
@@ -74,6 +74,12 @@ discoverable, parseable, watchable and scale-tested. The UI reads provider ident
 
 ## Session history (summaries — full detail in claude-mem)
 
+### 20260901 — Milestone 8, Hermes adapter
+- Built the adapter for both Hermes forms; all three providers now sit behind the contract. 131 tests, 188 checks.
+- Hermes fixtures are SYNTHESIZED from the observed schema, not harvested: its sessions are personal Telegram and Discord conversations, and redacting a personal chat leaves a personal chat.
+- Confidence is lowest here by design: a shell command is `derived` from a tool name, a delegation is `heuristic`.
+- Evidence basis: CHANGELOG 20260901_2330.
+
 ### 20260901 — Milestone 7, Hermes audit
 - Audited the live store against pinned upstream `5a8e8a6b`; found a second, larger `session_*.json` store the accepted ADR had missed, and superseded that ADR.
 - No token usage exists in either Hermes format, so `tokenUsage`, `contextMetrics` and `cost` are all false. Shell exit codes ARE recorded, so status is `exact`.
@@ -98,7 +104,7 @@ discoverable, parseable, watchable and scale-tested. The UI reads provider ident
 
 ## Next actions
 
-- Milestone 8: build the Hermes adapter per the audit's decision table.
+- Decide whether to take Milestone 9 to 11, or to stop at a shippable three-provider parse layer with no viewer for the two new providers.
 - Consider the generic event renderer now that two real provider shapes exist to design against.
 
 ---
