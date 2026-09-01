@@ -6,6 +6,12 @@ export type DatePreset = 'all' | '1h' | '24h' | '7d' | '30d' | 'custom';
 export interface FilterState {
   searchQuery: string;
   selectedModels: string[];
+  /**
+   * Provider ids to include. Empty means all, which is what a single-provider machine always sees.
+   * Filtering by provider is a first-class filter rather than a special case of the model filter, because
+   * two providers can serve the same model and a user narrowing to "Codex" means the agent, not the model.
+   */
+  selectedProviders: string[];
   datePreset: DatePreset;
   customDateFrom?: number;
   customDateTo?: number;
@@ -15,6 +21,7 @@ export interface FilterState {
 export const DEFAULT_FILTER_STATE: FilterState = {
   searchQuery: '',
   selectedModels: [],
+  selectedProviders: [],
   datePreset: 'all',
   groupMode: 'none',
 };
@@ -30,6 +37,10 @@ export interface HistoryEntry {
 
 export interface SessionSummary {
   sessionId: string;
+  /** Which agent produced this session. The UI labels and filters on this, never branches on it. */
+  providerId: string;
+  /** Human label for the provider, supplied by its adapter so the UI never maps ids to names itself. */
+  providerName: string;
   prompt: string;
   project: string;
   model: string;
@@ -50,6 +61,13 @@ export interface DashboardStats {
 
 export interface SessionDetail {
   sessionId: string;
+  providerId: string;
+  providerName: string;
+  /**
+   * What the provider can actually tell us. The UI shows or hides panels from these flags rather than from the
+   * provider id, so a provider that exposes no cost shows no cost panel instead of a convincing zero.
+   */
+  capabilities: SessionCapabilities;
   prompt: string;
   project: string;
   model: string;
@@ -63,6 +81,21 @@ export interface SessionDetail {
   filesWritten: string[];
   toolsUsed: Record<string, number>;
   analysis?: AnalysisResult;
+}
+
+/** Mirrors AgentSessionCapabilities for the view layer, which must not import the adapter contract. */
+export interface SessionCapabilities {
+  shellCommands: boolean;
+  shellOutput: boolean;
+  fileReads: boolean;
+  fileWrites: boolean;
+  fileEdits: boolean;
+  mcpCalls: boolean;
+  subagents: boolean;
+  tokenUsage: boolean;
+  cost: boolean;
+  contextMetrics: boolean;
+  reasoningMetadata: boolean;
 }
 
 export type StepType = 'thinking' | 'tool_call' | 'text' | 'error' | 'subagent';

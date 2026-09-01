@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { SessionDetail, flattenSessionSteps } from './types/session';
+import { SessionDetail, flattenSessionSteps, NO_CAPABILITIES } from './types/session';
 import StepsTab from './components/StepsTab';
 import AnalysisTab from './components/AnalysisTab';
 import CostTab from './components/CostTab';
@@ -78,6 +78,10 @@ function App() {
     (acc, s) => acc + (s.analysis?.findings?.length ?? 0),
     0
   );
+  // What the provider can report. A session from an older cached build carries no capabilities block; falling
+  // back to all-off hides panels rather than rendering empty ones, which is the point of the mechanism.
+  const caps = session.capabilities ?? NO_CAPABILITIES;
+
   const findingCount = (session.analysis?.findings?.length ?? 0) + agentFindingCount;
   const agentSubCost = session.subagents.reduce((acc, s) => acc + (s.totalCost || 0), 0);
   const totalCost =
@@ -117,6 +121,7 @@ function App() {
             {flatSteps.length} steps
             {session.subagents.length > 0 && ` · ${session.subagents.length} agents`}
           </span>
+          {session.providerName && <span className="provider-badge">{session.providerName}</span>}
           {isLive && <span className="live-badge"><span className="live-dot"></span>LIVE</span>}
         </div>
       </div>
@@ -134,12 +139,14 @@ function App() {
         >
           Analysis ({findingCount})
         </button>
-        <button
-          className={`tab ${activeTab === 'cost' ? 'active' : ''}`}
-          onClick={() => setActiveTab('cost')}
-        >
-          Cost (${totalCost.toFixed(2)})
-        </button>
+        {caps.cost && (
+          <button
+            className={`tab ${activeTab === 'cost' ? 'active' : ''}`}
+            onClick={() => setActiveTab('cost')}
+          >
+            Cost (${totalCost.toFixed(2)})
+          </button>
+        )}
         <button
           className={`tab ${activeTab === 'flow' ? 'active' : ''}`}
           onClick={() => setActiveTab('flow')}
@@ -152,12 +159,14 @@ function App() {
         >
           Map
         </button>
-        <button
-          className={`tab ${activeTab === 'context' ? 'active' : ''}`}
-          onClick={() => setActiveTab('context')}
-        >
-          Context
-        </button>
+        {caps.contextMetrics && (
+          <button
+            className={`tab ${activeTab === 'context' ? 'active' : ''}`}
+            onClick={() => setActiveTab('context')}
+          >
+            Context
+          </button>
+        )}
         <button
           className={`tab ${activeTab === 'performance' ? 'active' : ''}`}
           onClick={() => setActiveTab('performance')}

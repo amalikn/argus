@@ -139,6 +139,8 @@ export class DiscoveryService {
       const isActive = now - ds.lastModified.getTime() < 2 * 60 * 1000;
 
       summaries.push({
+        providerId: 'claude-code',
+        providerName: 'Claude Code',
         sessionId: ds.sessionId,
         prompt: ds.prompt,
         project: ds.project,

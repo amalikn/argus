@@ -15,6 +15,7 @@ export class SessionListViewProvider implements vscode.WebviewViewProvider {
     private readonly _onSearch: (query: string) => void,
     private readonly _onOpenSession: (sessionId: string) => void,
     private readonly _onModelFilter: (model: string) => void,
+    private readonly _onProviderFilter: (providerId: string) => void,
     private readonly _onDateFilter: (preset: string, from?: number, to?: number) => void
   ) {
     this._extensionPath = extensionPath;
@@ -45,6 +46,9 @@ export class SessionListViewProvider implements vscode.WebviewViewProvider {
           break;
         case 'openSession':
           this._onOpenSession(message.sessionId);
+          break;
+        case 'providerFilter':
+          this._onProviderFilter(message.providerId);
           break;
         case 'modelFilter':
           this._onModelFilter(message.model);
@@ -518,6 +522,18 @@ export class SessionListViewProvider implements vscode.WebviewViewProvider {
   }
 
   /* Session items */
+  .provider-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 0 5px;
+    border-radius: 3px;
+    font-size: 10px;
+    line-height: 15px;
+    color: var(--vscode-badge-foreground);
+    background: var(--vscode-badge-background);
+    vertical-align: middle;
+  }
+
   .session-item {
     display: flex;
     align-items: center;
@@ -1054,14 +1070,20 @@ export class SessionListViewProvider implements vscode.WebviewViewProvider {
       return '';
     }
 
+    let providerCount = 0;
+
     function renderSessionItem(s, grouped) {
       const icon = s.isActive ? LIVE_ICON : SESSION_ICON;
+      // The provider badge appears only when the list actually spans more than one provider. On a
+      // Claude-only machine it would be a label repeated on every row, which is noise rather than information.
+      const showProvider = providerCount > 1 && s.providerName;
       const desc = [formatModel(s.model), shortProject(s.project), relativeTime(s.lastModified)]
         .filter(Boolean).join(' · ');
       const cls = grouped ? 'session-item grouped' : 'session-item';
       return '<div class="' + cls + '" tabindex="0" data-id="' + s.sessionId + '">'
         + '<img class="session-icon" src="' + icon + '">'
         + '<span class="session-label">' + escapeHtml(s.prompt || 'Untitled Session') + '</span>'
+        + (showProvider ? '<span class="provider-badge">' + escapeHtml(s.providerName) + '</span>' : '')
         + '<span class="session-desc">' + escapeHtml(desc) + '</span>'
         + '</div>';
     }
@@ -1071,6 +1093,9 @@ export class SessionListViewProvider implements vscode.WebviewViewProvider {
     }
 
     function render() {
+      // Recomputed per render rather than cached: a provider can appear or disappear when a filter changes.
+      providerCount = new Set(sessions.map(function (s) { return s.providerId; }).filter(Boolean)).size;
+
       if (!sessions.length) {
         listEl.innerHTML = '<div class="empty">No sessions found</div>';
         return;

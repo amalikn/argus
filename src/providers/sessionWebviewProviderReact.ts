@@ -253,6 +253,10 @@ export class SessionWebviewProviderReact {
       for (const subagent of session.subagents) {
         const subSession: SessionDetail = {
           sessionId: subagent.agentId,
+          // A subagent belongs to the same provider as its parent, and can prove exactly what the parent can.
+          providerId: session.providerId,
+          providerName: session.providerName,
+          capabilities: session.capabilities,
           prompt: subagent.prompt,
           project: '',
           model: subagent.model,

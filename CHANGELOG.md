@@ -4,6 +4,7 @@ Durable project and governance history. Append entries; do not rewrite historica
 
 ## Contents
 
+- [20260901_2045 — Milestone 4](#20260901_2045-milestone-4)
 - [20260901_2015 — Milestone 3, Stop 2](#20260901_2015-milestone-3-stop-2)
 - [20260901_1950 — Milestone 2.5](#20260901_1950-milestone-25)
 - [20260901_1935 — Milestone 2.4](#20260901_1935-milestone-24)
@@ -15,6 +16,28 @@ Durable project and governance history. Append entries; do not rewrite historica
 - [20260901_1708](#20260901_1708)
 
 ---
+
+## 20260901_2045 — Milestone 4
+
+### Added
+
+- `SessionCapabilities` on both sides of the webview boundary, plus `providerId` and `providerName` on `SessionSummary` and `SessionDetail`.
+- `FilterState.selectedProviders` and a toggling provider filter, wired through the list webview.
+- Provider badges: in the session detail header, and on list rows but only when the list actually spans more than one provider.
+- `tests/ui-neutrality.test.ts`.
+
+### Changed
+
+- The Cost and Context tabs are rendered from capability flags rather than unconditionally. A session whose model is missing from the pricing table now has no Cost tab instead of a tab full of zeros.
+- `NO_CAPABILITIES` is the webview fallback for a session that arrives without a capabilities block, so an older cached session hides panels rather than rendering empty ones.
+
+### Notes
+
+- The cost capability is decided per session, not per provider: Claude reports usage, but a model absent from the pricing table cannot be costed.
+- **Deferred deliberately: the generic event renderer.** The webview still consumes `SessionDetail` and `Step` rather than `AgentEvent`. Rewriting the renderer against the normalized model while only
+  one provider exists would be designing against a single example — the same mistake the plan corrections removed elsewhere. It lands in Milestone 5 and 6, once Codex is a second real shape to design
+  against.
+- Tests: 85. All six gates pass.
 
 ## 20260901_2015 — Milestone 3, Stop 2
 

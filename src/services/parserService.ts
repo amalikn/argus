@@ -316,6 +316,24 @@ export class ParserService {
 
     return {
       sessionId,
+      providerId: 'claude-code',
+      providerName: 'Claude Code',
+      capabilities: {
+        shellCommands: true,
+        shellOutput: true,
+        fileReads: true,
+        fileWrites: true,
+        fileEdits: true,
+        mcpCalls: true,
+        subagents: true,
+        tokenUsage: true,
+        // Per session, not per provider: Claude reports usage, but a model missing from the pricing table
+        // cannot be costed, and the UI must hide the cost view rather than render zeros.
+        cost: pricing.hasPricing(model),
+        contextMetrics: true,
+        reasoningMetadata: true,
+      },
+
       prompt,
       project,
       model,

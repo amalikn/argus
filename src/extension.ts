@@ -63,6 +63,11 @@ export function activate(context: vscode.ExtensionContext) {
       );
     }
 
+    // Provider filter
+    if (filterState.selectedProviders.length > 0) {
+      result = result.filter(s => filterState.selectedProviders.includes(s.providerId));
+    }
+
     // Date filter
     const now = Date.now();
     switch (filterState.datePreset) {
@@ -128,9 +133,21 @@ export function activate(context: vscode.ExtensionContext) {
     const hasActive =
       filterState.searchQuery !== '' ||
       filterState.selectedModels.length > 0 ||
+      filterState.selectedProviders.length > 0 ||
       filterState.datePreset !== 'all' ||
       filterState.groupMode !== 'none';
     vscode.commands.executeCommand('setContext', 'argus.hasActiveFilters', hasActive);
+  }
+
+  function toggleProvider(providerId: string) {
+    const idx = filterState.selectedProviders.indexOf(providerId);
+    if (idx >= 0) {
+      filterState.selectedProviders.splice(idx, 1);
+    } else {
+      filterState.selectedProviders.push(providerId);
+    }
+    syncContextKeys();
+    refreshList();
   }
 
   function toggleModel(model: string) {
@@ -178,6 +195,11 @@ export function activate(context: vscode.ExtensionContext) {
       filterState.selectedModels = model ? [model] : [];
       syncContextKeys();
       refreshList();
+    },
+    (providerId) => {
+      // Toggling rather than replacing: a user narrowing to two of three providers is a normal request, and
+      // replace-on-click would make that impossible to express.
+      toggleProvider(providerId);
     },
     (preset, from, to) => {
       filterState.datePreset = preset as any;

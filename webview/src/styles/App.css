@@ -40,6 +40,16 @@
   color: var(--text-dim);
 }
 
+.provider-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 3px;
+  font-size: 11px;
+  color: var(--vscode-badge-foreground);
+  background: var(--vscode-badge-background);
+}
+
 .live-badge {
   display: inline-flex;
   align-items: center;

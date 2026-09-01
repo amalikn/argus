@@ -1,5 +1,44 @@
+/** What the provider that produced this session can actually report. Mirrors the extension-side type. */
+export interface SessionCapabilities {
+  shellCommands: boolean;
+  shellOutput: boolean;
+  fileReads: boolean;
+  fileWrites: boolean;
+  fileEdits: boolean;
+  mcpCalls: boolean;
+  subagents: boolean;
+  tokenUsage: boolean;
+  cost: boolean;
+  contextMetrics: boolean;
+  reasoningMetadata: boolean;
+}
+
+/**
+ * Every capability off.
+ *
+ * Used when a session arrives without a capabilities block, which happens for a session cached by an older
+ * build. Defaulting to OFF hides panels that might have worked; defaulting to ON renders panels with no data
+ * behind them, which is the failure this whole mechanism exists to prevent.
+ */
+export const NO_CAPABILITIES: SessionCapabilities = {
+  shellCommands: false,
+  shellOutput: false,
+  fileReads: false,
+  fileWrites: false,
+  fileEdits: false,
+  mcpCalls: false,
+  subagents: false,
+  tokenUsage: false,
+  cost: false,
+  contextMetrics: false,
+  reasoningMetadata: false,
+};
+
 export interface SessionDetail {
   sessionId: string;
+  providerId?: string;
+  providerName?: string;
+  capabilities?: SessionCapabilities;
   prompt: string;
   project: string;
   model: string;
