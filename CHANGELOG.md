@@ -2,6 +2,40 @@
 
 Durable project and governance history. Append entries; do not rewrite historical ones.
 
+## Contents
+
+- [20260901_1915 — Milestone 2.1 to 2.3](#20260901_1915-milestone-21-to-23)
+- [20260901_1845](#20260901_1845)
+- [20260901_1830](#20260901_1830)
+- [20260901_1800](#20260901_1800)
+- [20260901_1745](#20260901_1745)
+- [20260901_1708](#20260901_1708)
+
+---
+
+## 20260901_1915 — Milestone 2.1 to 2.3
+
+### Added
+
+- Test harness: vitest 3, `vitest.config.ts`, `npm test` now runs it. Finding F1 is closed and all six baseline gates pass for the first time.
+- `scripts/make-fixtures.py` and `just fixtures` / `just fixtures-verify`: harvests the Claude fixture corpus from real transcripts, sanitizes it, synthesizes the three failure modes, and verifies no
+  secret survived.
+- `tests/fixtures/claude/`: 16 files across 15 categories. Category 06 is a directory layout, because Claude stores a subagent as a sibling `subagents/` directory rather than inline records.
+- `tests/fixtures.test.ts`: pins each fixture to the property its name claims, plus a leak assertion that runs on every test invocation rather than only on rebuild.
+- `tests/claude-parity.test.ts` and its snapshots: the Stop 2 gate. Captures what the pre-refactor Claude pipeline produces for every fixture.
+- `scripts/README.md` inventory table with safety labels for all five scripts.
+
+### Changed
+
+- `package.json`: `test` was a dead script pointing at a path that never existed; it now runs vitest. `test:watch` and `test:coverage` added.
+
+### Notes
+
+- Three real defects were found and fixed while building the corpus, each caught by a check rather than by inspection: fixtures were written with pretty-print separators while real transcripts are
+  compact; a rewrite of the builder silently dropped the `redact()` call and produced structurally perfect fixtures carrying the operator home path; and windowing on an anchor broke the `parentUuid`
+  chains, so a 110 KB fixture parsed to a single step and would have pinned damaged behaviour as the parity baseline.
+- Checks rose from 157 to 166. Tests: 43 passing, 16 snapshots.
+
 ## 20260901_1845
 
 ### Changed

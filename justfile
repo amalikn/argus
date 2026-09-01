@@ -101,6 +101,14 @@ fmt-doc FILE:
 _require-venv:
     @test -x "{{python}}" || { echo "venv missing at {{python}} — run: just setup-python" >&2; exit 1; }
 
+# Rebuild the sanitized Claude fixture corpus. Reads real transcripts; verifies no secret survives.
+fixtures: _require-venv
+    {{python}} scripts/make-fixtures.py
+
+# Verify the existing fixtures carry no forbidden pattern, without rebuilding them.
+fixtures-verify: _require-venv
+    {{python}} scripts/make-fixtures.py --verify-only
+
 # Governance coherence checks. Must exit 0 before durable work is called complete.
 check: _require-venv
     {{python}} scripts/check_governance.py
