@@ -58,9 +58,6 @@ authority_order:
 - path: SCRATCHPAD.md
   type: transient_notes
   authority: low
-- path: ARCHCORE_PROMOTION_CANDIDATES.md
-  type: promotion_candidates
-  authority: generated_support
 context_sources:
   archcore:
     enabled: true
@@ -110,7 +107,6 @@ routing:
     description: Roadmap, work breakdown, current status, next steps.
     read:
     - .archcore/plans
-    - ARCHCORE_PROMOTION_CANDIDATES.md
     - ROADMAP.md
     - roadmap.md
     - CHANGELOG.md
@@ -126,7 +122,6 @@ routing:
     - context-map.yaml
     - CHANGELOG.md
     - .archcore/rules
-    - ARCHCORE_PROMOTION_CANDIDATES.md
   implementation:
     description: Code, scripts, configs, tests, automation.
     read:

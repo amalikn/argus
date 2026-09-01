@@ -24,7 +24,7 @@ or `webview/` has been modified. Governance and an executable coherence checker 
 - [ ] Sanitized Claude fixtures not extracted. The inventory proves 12 of 15 categories are sourceable; extraction waits for a harness to consume them.
 - [ ] Cost still computed by two hardcoded tables (F5). The vendored pricing table exists; nothing consumes it yet.
 - [ ] Extension never launched in an Extension Development Host. Nothing yet proves it renders a session.
-- [ ] `ARCHCORE_PROMOTION_CANDIDATES.md` awaiting review, then `/skill-ai-it promote`.
+- [ ] The 21 promoted `.archcore/` documents are `status: proposed`. Review and move each to `accepted`, or reject it.
 
 ---
 
@@ -74,7 +74,7 @@ or `webview/` has been modified. Governance and an executable coherence checker 
 ## Next actions
 
 - Await go for Milestone 2, then start at M2.1 test-harness selection.
-- Review `ARCHCORE_PROMOTION_CANDIDATES.md` and decide what to promote.
+- Review the promoted `.archcore/` set and accept or reject each document.
 
 ---
 

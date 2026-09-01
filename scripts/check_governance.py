@@ -61,9 +61,18 @@ SURFACES: tuple[str, ...] = (
 
 # Index file -> (folder it indexes, glob). Enforces BOTH directions: links resolve, and members are linked.
 CATALOGS: dict[str, tuple[str, str]] = {
-    # "docs/README.md": ("docs", "*.md"),
-    # "scripts/README.md": ("scripts", "*.py"),
+    # Every promoted Archcore document must be linked from the durable index. This is the orphan
+    # direction that grows silently: a document nothing indexes is invisible to the next scan.
+    ".archcore/README.md": (".archcore/adr", "*.adr.md"),
 }
+
+# Additional catalog folders sharing one index, checked the same way.
+EXTRA_CATALOGS: tuple[tuple[str, str, str], ...] = (
+    (".archcore/README.md", ".archcore/rules", "*.rule.md"),
+    (".archcore/README.md", ".archcore/specs", "*.spec.md"),
+    (".archcore/README.md", ".archcore/guides", "*.guide.md"),
+    (".archcore/README.md", ".archcore/plans", "*.plan.md"),
+)
 
 # Files a catalog may legitimately omit (the index itself, generated output, dotfiles).
 CATALOG_EXEMPT: frozenset[str] = frozenset({"README.md", "__init__.py"})
@@ -101,13 +110,8 @@ CONDITIONAL_PATHS: frozenset[str] = frozenset({
     "memory-bank/activeContext.md",
     "memory-bank/progress.md",
     "memory-bank/decisionLog.md",
-    # Archcore content directories. Present only after an authorized promote run; the candidates
-    # report is transient and is deleted by promote, so its historical mentions must still resolve.
-    ".archcore/specs",
-    ".archcore/adr",
-    ".archcore/rules",
-    ".archcore/guides",
-    ".archcore/plans",
+    # The candidates queue is transient and was deleted by the promote run, so historical mentions
+    # in CHANGELOG.md must still resolve. History is not a live claim.
     "ARCHCORE_PROMOTION_CANDIDATES.md",
 })
 
@@ -305,13 +309,20 @@ def check_count_claims() -> None:
                         fail("count", f"{surface} claims {claim.group(1)} {noun}; {folder}/{glob} holds {actual}")
 
 
+def _catalog_pairs() -> list[tuple[str, str, str]]:
+    """CATALOGS plus EXTRA_CATALOGS, so several folders can share one index."""
+    pairs = [(index, folder, glob) for index, (folder, glob) in CATALOGS.items()]
+    pairs.extend(EXTRA_CATALOGS)
+    return pairs
+
+
 def check_catalog_coverage() -> None:
     """Both directions: the catalog names nothing missing, and nothing present is uncataloged.
 
     The second direction is the one that grows silently, and it is what makes this checker self-extending — a new file
     turns the build red until it is registered somewhere.
     """
-    for index, (folder, glob) in CATALOGS.items():
+    for index, folder, glob in _catalog_pairs():
         text = read(index)
         if text is None:
             continue
