@@ -52,6 +52,11 @@ SURFACES: tuple[str, ...] = (
     "CLAUDE.md",
     "AI_NAVIGATION.md",
     "context-map.yaml",
+    "CHANGELOG.md",
+    "SCRATCHPAD.md",
+    "ARCHITECTURE.md",
+    "CONVENTIONS.md",
+    "ROADMAP.md",
 )
 
 # Index file -> (folder it indexes, glob). Enforces BOTH directions: links resolve, and members are linked.
@@ -87,25 +92,23 @@ CONDITIONAL_PATHS: frozenset[str] = frozenset({
     # Alternative task runners named by the managed navigation block. Only justfile exists here.
     "Taskfile.yml",
     "Makefile",
-    # Surfaces the operator deliberately removed on 2026-09-01; historical mentions must still resolve.
-    "CHANGELOG.md",
-    "SCRATCHPAD.md",
+    # Lowercase spellings the generic router lists so it can serve either convention.
+    "architecture.md",
+    "roadmap.md",
+    "scratchpad.md",
+    # Optional surfaces this project does not use.
+    "docs/reports",
     "memory-bank/activeContext.md",
     "memory-bank/progress.md",
     "memory-bank/decisionLog.md",
-    # Optional surfaces the generic navigation router names. This project has none of them; the
-    # router lists both capitalised and lowercase spellings so it can serve either convention.
-    "ARCHITECTURE.md",
-    "architecture.md",
-    "ROADMAP.md",
-    "roadmap.md",
-    "scratchpad.md",
-    "docs/reports",
+    # Archcore content directories. Present only after an authorized promote run; the candidates
+    # report is transient and is deleted by promote, so its historical mentions must still resolve.
     ".archcore/specs",
     ".archcore/adr",
     ".archcore/rules",
     ".archcore/guides",
     ".archcore/plans",
+    "ARCHCORE_PROMOTION_CANDIDATES.md",
 })
 
 # Task runner file, or None if the project has none.
@@ -168,6 +171,27 @@ REPO_SUFFIXES: frozenset[str] = frozenset({".md", ".py", ".json", ".yaml", ".yml
 IGNORE_PREFIXES: tuple[str, ...] = ("http://", "https://", "mailto:", "~/", "/")
 IGNORE_EXACT: frozenset[str] = frozenset({"README.md", "AGENTS.md", "CLAUDE.md", "SCRATCHPAD.md", "CHANGELOG.md"})
 
+# Path-shaped tokens that are not repo paths. Kept separate from IGNORE_EXACT so the reason for each
+# class stays visible: these are references OUT of the repo, not exemptions for things inside it.
+EXTERNAL_SLUGS: frozenset[str] = frozenset({
+    "amalikn/argus",          # the fork on GitHub
+    "yessGlory17/argus",      # upstream on GitHub
+    "getagentseal/codeburn",  # pricing reference implementation
+    "BerriAI/litellm",        # pricing data source
+})
+
+# Git refs named in prose. Slash-separated and suffix-free, so they look exactly like directories.
+EXTERNAL_REFS: frozenset[str] = frozenset({
+    "feat/multi-agent-observability",
+})
+
+# Workspace peers that storage policy keeps outside the repo on purpose. A file resolving here would
+# mean the routing rule had been violated, so absence is the correct state rather than a defect.
+EXTERNAL_PREFIXES: tuple[str, ...] = (
+    "tools-runtime/",
+    "tools-working-cache/",
+)
+
 # --------------------------------------------------------------------------------------------------------------- HARNESS
 
 failures: list[str] = []
@@ -227,6 +251,8 @@ def check_referenced_paths() -> None:
         for raw in sorted(tokens):
             tok = raw.split("#", 1)[0].strip().rstrip("/")
             if not tok or tok in IGNORE_EXACT or tok in CONDITIONAL_PATHS or tok.startswith(IGNORE_PREFIXES):
+                continue
+            if tok in EXTERNAL_SLUGS or tok in EXTERNAL_REFS or tok.startswith(EXTERNAL_PREFIXES):
                 continue
             if not PATHLIKE.match(tok):
                 continue
