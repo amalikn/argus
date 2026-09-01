@@ -11,7 +11,10 @@ import {
   SessionDiscoveryContext,
 } from '../../core/adapters/agentAdapter';
 import { AgentSession, AgentSourceDescriptor } from '../../core/models/agentSession';
-import { parseRollout } from './parser';
+import { parseRollout, parseRolloutIncremental } from './parser';
+import { SessionFileWatcher } from '../../core/watch/sessionFileWatcher';
+import { AgentSessionDelta } from '../../core/models/agentSession';
+import { Disposable, WatchContext } from '../../core/adapters/agentAdapter';
 
 /**
  * OpenAI Codex adapter.
@@ -153,6 +156,64 @@ export class CodexAdapter implements AgentAdapter {
       throw new Error(`cannot parse ${discovered.id}: no source path`);
     }
     return parseRollout(filePath, discovered.id, discovered.source);
+  }
+
+  /**
+   * Follow a live rollout, reading only what was appended.
+   *
+   * The Claude adapter re-parses the whole file on each tick and diffs by event count, which is fine for a
+   * transcript measured in hundreds of KB. Codex rollouts reach 45 MB, so the same approach would re-read the
+   * entire file every time the agent writes a line. This tracks a byte offset instead and parses the tail.
+   *
+   * The offset only ever advances past COMPLETE lines, so a read that lands mid-write resumes at the start of
+   * the partial record rather than skipping it.
+   */
+  async watch(
+    discovered: DiscoveredSession,
+    onDelta: (delta: AgentSessionDelta) => void,
+    context: WatchContext = {}
+  ): Promise<Disposable> {
+    const filePath = discovered.source.sourcePath;
+    if (!filePath) {
+      throw new Error(`cannot watch ${discovered.id}: no source path`);
+    }
+
+    let offset = 0;
+    let sequence = 0;
+    let running = false;
+
+    const emit = async () => {
+      // A tick that arrives while the previous parse is still running is dropped rather than queued: the next
+      // change fires again, and overlapping parses of the same growing file would double-count events.
+      if (running) {
+        return;
+      }
+      running = true;
+      try {
+        const result = await parseRolloutIncremental(filePath, discovered.id, discovered.source, {
+          fromOffset: offset,
+          fromSequence: sequence,
+        });
+        if (result.session.events.length > 0) {
+          onDelta({
+            sessionId: result.session.id,
+            appendedEvents: result.session.events,
+            metrics: result.session.metrics,
+            diagnostics: result.session.diagnostics,
+            endedAt: result.session.endedAt,
+          });
+        }
+        offset = result.endOffset;
+        sequence = result.endSequence;
+      } catch {
+        // A transient read failure mid-write must not tear down the watcher; the next change retries.
+      } finally {
+        running = false;
+      }
+    };
+
+    await emit();
+    return SessionFileWatcher.watch(filePath, () => void emit(), context);
   }
 
   getCapabilities(): AgentAdapterCapabilities {

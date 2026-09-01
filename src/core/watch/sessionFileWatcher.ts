@@ -1,9 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { Disposable, WatchContext } from '../../core/adapters/agentAdapter';
+import { Disposable, WatchContext } from '../adapters/agentAdapter';
 
 /**
- * Live watching for a Claude session file and its subagents directory.
+ * Live watching for a session file and the sibling directory a provider may put subagents in.
+ *
+ * Provider-neutral by name and by behaviour: it was written for Claude, and the moment the Codex adapter
+ * needed the same debouncing and size deduplication it moved here rather than being copied. A file watcher
+ * that lives under one provider is a file watcher the next provider reimplements slightly differently.
  *
  * Extracted from sessionWebviewProviderReact, where it lived inside a UI class (finding F4). Watch logic in a
  * webview provider cannot be reused by another provider, cannot be tested without an extension host, and ties
@@ -12,7 +16,7 @@ import { Disposable, WatchContext } from '../../core/adapters/agentAdapter';
  * The subagents directory is watched separately and lazily: it is created only when a session spawns one, so a
  * watcher registered at session start would have nothing to attach to.
  */
-export class ClaudeWatcher {
+export class SessionFileWatcher {
   /**
    * Watch a session file, calling back on every settled change.
    *

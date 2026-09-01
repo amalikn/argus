@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { ClaudeWatcher } from '../adapters/claude-code/watcher';
+import { SessionFileWatcher } from '../core/watch/sessionFileWatcher';
 import { Disposable } from '../core/adapters/agentAdapter';
 import { ParserService } from '../services/parserService';
 import { AnalyzerService } from '../services/analyzerService';
@@ -143,7 +143,7 @@ export class SessionWebviewProviderReact {
     // Watching moved out of this class into the Claude adapter (finding F4). Watch logic living in a UI
     // provider cannot be reused by another provider, cannot be tested without an extension host, and ties a
     // filesystem handle to the lifetime of a panel. Debouncing, size deduplication and the lazy mount of the
-    // subagents/ directory now live in ClaudeWatcher; this class only decides what to do when it fires.
+    // subagents/ directory now live in SessionFileWatcher; this class only decides what to do when it fires.
     const reload = async () => {
       try {
         const updatedData = await this.loadSessionData(sessionId);
@@ -158,7 +158,7 @@ export class SessionWebviewProviderReact {
     try {
       this.watchHandles.set(
         sessionId,
-        ClaudeWatcher.watch(sessionInfo.filePath, () => void reload(), { debounceMs: 500 })
+        SessionFileWatcher.watch(sessionInfo.filePath, () => void reload(), { debounceMs: 500 })
       );
       panel.webview.postMessage({ type: 'liveMode', active: true });
     } catch (err) {

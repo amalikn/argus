@@ -74,20 +74,49 @@ function durationMs(duration: unknown): number | undefined {
   return undefined;
 }
 
+export interface CodexParseOptions {
+  /**
+   * Byte offset to resume from. Only whole lines below this offset have been consumed, so resuming here can
+   * never split a record: the previous read stopped at the last newline it saw, not wherever the buffer ended.
+   */
+  fromOffset?: number;
+  /** Sequence number to continue from, so event ids stay unique and ordered across incremental reads. */
+  fromSequence?: number;
+}
+
 export interface CodexParseResult {
   session: AgentSession;
+  /**
+   * Offset of the end of the last COMPLETE line. A rollout being written to ends mid-record, and advancing
+   * past that partial line would drop the record when the rest of it lands.
+   */
+  endOffset: number;
+  /** Sequence to resume from on the next incremental read. */
+  endSequence: number;
 }
 
 export async function parseRollout(
   filePath: string,
   sessionId: string,
-  source: AgentSourceDescriptor
+  source: AgentSourceDescriptor,
+  options: CodexParseOptions = {}
 ): Promise<AgentSession> {
+  return (await parseRolloutIncremental(filePath, sessionId, source, options)).session;
+}
+
+export async function parseRolloutIncremental(
+  filePath: string,
+  sessionId: string,
+  source: AgentSourceDescriptor,
+  options: CodexParseOptions = {}
+): Promise<CodexParseResult> {
   const session = emptySession(sessionId, PROVIDER, source);
   const diagnostics: ParseDiagnostic[] = [];
   const events: AgentEvent[] = [];
 
-  let sequence = 0;
+  let sequence = options.fromSequence ?? 0;
+  // Bytes of complete lines consumed, which is what a resume may safely start from.
+  let consumed = options.fromOffset ?? 0;
   let malformed = 0;
   let sawExec = false;
   let sawExecOutput = false;
@@ -102,21 +131,33 @@ export async function parseRollout(
   // A function_call and its function_call_output are separated by other records and correlated by call_id.
   const pendingCalls = new Map<string, string>();
 
-  const stream = fs.createReadStream(filePath, { encoding: 'utf8' });
+  // Streamed from an offset rather than read whole. `start` makes an incremental read cost the size of the
+  // APPENDED bytes rather than the size of the file, which for a 45 MB rollout being appended to once a second
+  // is the difference between a usable live view and a melted CPU.
+  const stream = fs.createReadStream(filePath, { encoding: 'utf8', start: options.fromOffset ?? 0 });
   const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
 
   for await (const raw of rl) {
+    // Count the bytes of this line plus its newline BEFORE deciding what to do with it, so `consumed` always
+    // describes complete lines. readline yields a final partial line without a newline; that one is parsed if
+    // it happens to be valid JSON, but it never advances `consumed`.
+    const lineBytes = Buffer.byteLength(raw, 'utf8');
     const line = raw.trim();
     if (!line) {
+      consumed += lineBytes + 1;
       continue;
     }
 
     let record: RolloutLine;
     try {
       record = JSON.parse(line) as RolloutLine;
+      consumed += lineBytes + 1;
     } catch {
       // A corrupt or half-written line is data loss for that record only. Counting them and continuing is the
       // difference between a session that renders with a gap and a session that fails to open at all.
+      // A line that does not parse is either corrupt or the partial tail of a record still being written. It
+      // is counted, and `consumed` is deliberately NOT advanced past it: if it was a partial write, the next
+      // read must start at its beginning to pick up the completed record.
       malformed += 1;
       continue;
     }
@@ -469,5 +510,5 @@ export async function parseRollout(
     reasoningMetadata: sawReasoning,
   };
 
-  return session;
+  return { session, endOffset: consumed, endSequence: sequence };
 }

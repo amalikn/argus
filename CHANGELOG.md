@@ -4,6 +4,7 @@ Durable project and governance history. Append entries; do not rewrite historica
 
 ## Contents
 
+- [20260901_2200 — Milestone 6, Stop 3](#20260901_2200-milestone-6-stop-3)
 - [20260901_2130 — Milestone 5](#20260901_2130-milestone-5)
 - [20260901_2045 — Milestone 4](#20260901_2045-milestone-4)
 - [20260901_2015 — Milestone 3, Stop 2](#20260901_2015-milestone-3-stop-2)
@@ -17,6 +18,28 @@ Durable project and governance history. Append entries; do not rewrite historica
 - [20260901_1708](#20260901_1708)
 
 ---
+
+## 20260901_2200 — Milestone 6, Stop 3
+
+### Added
+
+- Incremental parsing for Codex: `parseRolloutIncremental` resumes from a byte offset and returns the offset of the last COMPLETE line, plus a sequence to continue from.
+- `CodexAdapter.watch`: live rollout following that reads only appended bytes.
+- `tests/codex-scale.test.ts`: the scale gate, the incremental-read assertion, the partial-line correctness case and a live-watch lifecycle test.
+
+### Changed
+
+- `ClaudeWatcher` renamed to `SessionFileWatcher` and moved to `src/core/watch/`. It was written for Claude, and the moment Codex needed the same debouncing and size deduplication it moved to shared
+  code rather than being copied.
+
+### Notes — Stop 3 report
+
+- **Scale measured, not asserted.** A synthesized 15 MB rollout of 20,000 records parses in **381 ms**, streamed. Extrapolated, the largest rollout in the local store, 45 MB, is roughly one second. An
+  incremental pass over an appended record takes **4 ms**.
+- The offset only ever advances past complete lines. A rollout read mid-write ends on a partial record, and advancing past it would drop that record permanently once the rest landed. There is a test
+  that writes half a record, reads, completes the record, resumes from the recorded offset, and asserts the whole record arrives.
+- An overlapping tick is dropped rather than queued: the next change fires again, and two concurrent parses of the same growing file would double-count events.
+- Tests: 110. All six gates pass.
 
 ## 20260901_2130 — Milestone 5
 

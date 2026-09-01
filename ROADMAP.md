@@ -5,7 +5,7 @@ Milestone sequence, stop gates and scope tiers. The governing detail lives in
 
 ## Current phase
 
-**Milestone 1 complete. Halted at Stop 1.** Milestone 2 does not begin without an explicit go.
+**Milestones 1 to 6 complete.** Stops 1, 2 and 3 all reported green. Milestones 7 and 8 (Hermes) are next.
 
 ## Stop gates
 
@@ -27,16 +27,16 @@ Three halts are mandatory. At each, stop and report; do not proceed without an e
 
 - [x] **M1 — Audit and baseline.** Fork established, baseline tagged, six gates measured, code mapped to the plan conceptual roles, 12 findings recorded, fixture inventory across 10,072 sessions,
   pricing layer built. No source file modified.
-- [ ] **M2 — Provider-neutral core.** Reordered by finding F1: test harness first, because the parity snapshot has nowhere to live without one.
-  - [ ] M2.1 Select and wire a test harness
-  - [ ] M2.2 Extract and sanitize Claude fixtures (12 of 15 categories sourceable; 3 synthesized)
-  - [ ] M2.3 Snapshot current Claude normalized behaviour
-  - [ ] M2.4 `PricingProvider` replacing both hardcoded cost tables
-  - [ ] M2.5 `AgentSession`, `AgentEvent`, adapter interface, registry, capabilities, diagnostics
-- [ ] **M3 — Claude adapter migration.** Move discovery, parsing and watching behind the adapter contract. Harder than planned: watch logic currently lives inside the webview provider.
-- [ ] **M4 — UI provider-neutralization.** Largest single chunk, roughly 4700 lines of React.
-- [ ] **M5 — Codex discovery and parser.** Read-only historical parsing first.
-- [ ] **M6 — Codex live watch and scale hardening.**
+- [x] **M2 — Provider-neutral core.** Reordered by finding F1: test harness first, because the parity snapshot has nowhere to live without one.
+  - [x] M2.1 Select and wire a test harness
+  - [x] M2.2 Extract and sanitize Claude fixtures (12 of 15 categories sourceable; 3 synthesized)
+  - [x] M2.3 Snapshot current Claude normalized behaviour
+  - [x] M2.4 `PricingProvider` replacing both hardcoded cost tables
+  - [x] M2.5 `AgentSession`, `AgentEvent`, adapter interface, registry, capabilities, diagnostics
+- [x] **M3 — Claude adapter migration.** Move discovery, parsing and watching behind the adapter contract. Harder than planned: watch logic currently lives inside the webview provider.
+- [x] **M4 — UI provider-neutralization.** Largest single chunk, roughly 4700 lines of React.
+- [x] **M5 — Codex discovery and parser.** Read-only historical parsing first.
+- [x] **M6 — Codex live watch and scale hardening.**
 - [ ] **M7 — Hermes source audit.** Starts from `~/.hermes/sessions/*.jsonl`; pin the upstream commit audited.
 - [ ] **M8 — Hermes adapter.**
 - [ ] **M9 — Unified analysis.** De-scopable. Six rules to port, enumerated in finding F9.

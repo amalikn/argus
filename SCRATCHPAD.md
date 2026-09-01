@@ -9,21 +9,20 @@ explicitly marked KEEP.
 
 ## Current state
 
-**Phase:** Milestone 1 complete and committed. Halted at Stop 1, awaiting an explicit go for Milestone 2.
+**Phase:** Milestones 1 to 6 complete and pushed. Stops 1, 2 and 3 all reported green. Hermes (M7 and M8) is next.
 
-The fork lives at `amalikn/argus` on branch `feat/multi-agent-observability`, with the unmodified upstream preserved at tag `baseline-upstream-argus`. Milestone 1 measured the baseline rather than
-assuming it: five of six quality gates pass, and the sixth fails because the gate does not exist. Twelve findings are recorded in the audit, two of which reorder later milestones. No file under `src/`
-or `webview/` has been modified. Governance and an executable coherence checker are now in place.
+The fork lives at `amalikn/argus` on branch `feat/multi-agent-observability`, with the unmodified upstream preserved at tag `baseline-upstream-argus`. All six quality gates now pass, where the
+baseline had one that could not run at all. Claude runs behind the adapter contract with its parity snapshots intact, cost resolves through one provider-neutral pricing table, and Codex is
+discoverable, parseable, watchable and scale-tested. The UI reads provider identity and capability flags rather than branching on provider.
 
 ---
 
 ## Open items
 
-- [ ] Milestone 2 not started. Gated on an explicit go, per the Stop 1 discipline the plan now carries.
-- [ ] `npm test` fails (F1). There is no test directory under source, and no runner in the dependency tree. The whole regression strategy in the plan depends on this being fixed first.
-- [ ] Sanitized Claude fixtures not extracted. The inventory proves 12 of 15 categories are sourceable; extraction waits for a harness to consume them.
-- [ ] Cost still computed by two hardcoded tables (F5). The vendored pricing table exists; nothing consumes it yet.
-- [ ] Extension never launched in an Extension Development Host. Nothing yet proves it renders a session.
+- [ ] Milestones 7 and 8: Hermes. Start from `~/.hermes/sessions/*.jsonl`, and pin the upstream commit audited.
+- [ ] The generic event renderer is not built. The webview still consumes `SessionDetail`, so a Codex session is parseable but not yet viewable.
+- [ ] Extension never launched in an Extension Development Host. Every gate is static; nothing yet proves it renders a session.
+- [ ] Codex tiered above-threshold pricing is stored but not applied, so very long turns are costed at the base rate.
 - [ ] The 21 promoted `.archcore/` documents are `status: proposed`. Review and move each to `accepted`, or reject it.
 
 ---
@@ -62,6 +61,13 @@ or `webview/` has been modified. Governance and an executable coherence checker 
 
 ## Session history (summaries — full detail in claude-mem)
 
+### 20260901 — Milestones 2 to 6
+- Test harness (vitest), 16 Claude and 9 Codex sanitized fixtures, and the Claude parity snapshots that gate Stop 2.
+- Deleted both hardcoded cost tables for one PricingProvider; found upstream understated cache writes fivefold.
+- Claude and Codex both run behind the adapter contract; Codex reads two different rollout format generations.
+- 15 MB rollout parses in 381 ms streamed; incremental append costs 4 ms.
+- Evidence basis: CHANGELOG entries 20260901_1915 through 20260901_2200.
+
 ### 20260901 — plan review, Milestone 1, governance bootstrap
 - Reviewed the implementation plan, verified its path and schema claims against live systems, applied four corrections before execution.
 - Ran Milestone 1: forked, tagged the baseline, measured all six gates, mapped code to the plan conceptual roles, produced 12 findings, inventoried fixtures across 10,072 sessions.
@@ -73,8 +79,8 @@ or `webview/` has been modified. Governance and an executable coherence checker 
 
 ## Next actions
 
-- Await go for Milestone 2, then start at M2.1 test-harness selection.
-- Review the promoted `.archcore/` set and accept or reject each document.
+- Milestone 7: audit the Hermes session store against a pinned upstream commit.
+- Consider the generic event renderer now that two real provider shapes exist to design against.
 
 ---
 

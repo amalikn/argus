@@ -15,7 +15,7 @@ import { AgentSession, AgentSessionDelta, AgentSourceDescriptor, ParseDiagnostic
 import { ParserService } from '../../services/parserService';
 import { getClaudeConfigDir } from '../../utils/claudePaths';
 import { normalizeSession } from './normalizer';
-import { ClaudeWatcher } from './watcher';
+import { SessionFileWatcher } from '../../core/watch/sessionFileWatcher';
 
 /**
  * The Claude Code adapter — the reference implementation of the adapter contract.
@@ -197,7 +197,7 @@ export class ClaudeCodeAdapter implements AgentAdapter {
     };
 
     await emit();
-    return ClaudeWatcher.watch(filePath, () => void emit(), context);
+    return SessionFileWatcher.watch(filePath, () => void emit(), context);
   }
 
   getCapabilities(): AgentAdapterCapabilities {
