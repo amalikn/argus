@@ -4,6 +4,7 @@ Durable project and governance history. Append entries; do not rewrite historica
 
 ## Contents
 
+- [20260901_1950 — Milestone 2.5](#20260901_1950-milestone-25)
 - [20260901_1935 — Milestone 2.4](#20260901_1935-milestone-24)
 - [20260901_1915 — Milestone 2.1 to 2.3](#20260901_1915-milestone-21-to-23)
 - [20260901_1845](#20260901_1845)
@@ -13,6 +14,26 @@ Durable project and governance history. Append entries; do not rewrite historica
 - [20260901_1708](#20260901_1708)
 
 ---
+
+## 20260901_1950 — Milestone 2.5
+
+### Added
+
+- `src/core/models/schema.ts`: `NORMALIZED_SCHEMA_VERSION`, `SessionMigration`, and a composing `migrateSession` that refuses a session from a newer version rather than passing it through.
+- `src/core/models/agentEvent.ts`: the `AgentEvent` discriminated union over 17 kinds, `Confidence`, an open `AgentProviderId`, and a namespaced `extensions` field so provider data never widens a
+  normalized type.
+- `src/core/models/agentSession.ts`: `AgentSession`, `AgentSourceDescriptor`, `AgentSessionCapabilities`, `AgentSessionMetrics`, `ParseDiagnostic`, `AgentSessionDelta`, plus `NO_CAPABILITIES` and
+  `emptySession`.
+- `src/core/adapters/agentAdapter.ts`: the adapter contract — `detect`, `discover`, `parse`, optional `watch`, `getCapabilities` — with its context types.
+- `src/core/adapters/registry.ts`: `AdapterRegistry`, which refuses duplicate registration and isolates a throwing adapter during detection.
+- `tests/core-model.test.ts`: 12 tests over the model, migrations and registry.
+
+### Notes
+
+- Every capability starts `false`, so an adapter has to prove what it supports rather than inherit optimism.
+- `diagnostics` is always present even when empty, because an absent array and a clean parse are different claims.
+- No existing code path uses any of this yet. Milestone 3 moves the Claude implementation behind it.
+- Tests: 66 passing.
 
 ## 20260901_1935 — Milestone 2.4
 
