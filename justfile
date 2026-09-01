@@ -77,7 +77,7 @@ compile:
 webview:
     {{npm}} run build:webview
 
-# Upstream declares this script but ships no test directory or runner. Expected to fail until M2 adds a harness.
+# Runs vitest. Upstream shipped a test script pointing at a path that never existed; M2.1 replaced it.
 test:
     {{npm}} test
 
@@ -115,10 +115,15 @@ fixtures: _require-venv
 codex-fixtures: _require-venv
     {{python}} scripts/make-codex-fixtures.py
 
+# Rebuild the synthesized Hermes fixtures. Synthesized, not harvested — see the script header.
+hermes-fixtures: _require-venv
+    {{python}} scripts/make-hermes-fixtures.py
+
 # Verify the existing fixtures carry no forbidden pattern, without rebuilding them.
 fixtures-verify: _require-venv
     {{python}} scripts/make-fixtures.py --verify-only
     {{python}} scripts/make-codex-fixtures.py --verify-only
+    {{python}} scripts/make-hermes-fixtures.py --verify-schema
 
 # Governance coherence checks. Must exit 0 before durable work is called complete.
 check: _require-venv

@@ -4,6 +4,7 @@ Durable project and governance history. Append entries; do not rewrite historica
 
 ## Contents
 
+- [20260901_2330 — Milestone 8](#20260901_2330-milestone-8)
 - [20260901_2245 — Milestone 7](#20260901_2245-milestone-7)
 - [20260901_2200 — Milestone 6, Stop 3](#20260901_2200-milestone-6-stop-3)
 - [20260901_2130 — Milestone 5](#20260901_2130-milestone-5)
@@ -19,6 +20,34 @@ Durable project and governance history. Append entries; do not rewrite historica
 - [20260901_1708](#20260901_1708)
 
 ---
+
+## 20260901_2330 — Milestone 8
+
+### Added
+
+- `src/adapters/hermes/`: `parser.ts` reading both Hermes forms, and `HermesAdapter`.
+- `scripts/make-hermes-fixtures.py` and `just hermes-fixtures`: 11 fixtures SYNTHESIZED from the observed schema rather than harvested, plus a `--verify-schema` mode that re-derives the shape from the
+  live store and fails on drift.
+- `tests/hermes-adapter.test.ts`: 21 tests over detection, dual-form discovery, snapshot and mirror parsing, confidence marking and capability reporting.
+- The Hermes adapter is registered at activation. All three providers are now behind the contract.
+
+### Changed
+
+- `justfile`: the `test` recipe comment was stale, still claiming the gate would fail until M2 added a harness.
+
+### Notes
+
+- **Hermes fixtures are synthesized, not harvested, and that is a deliberate departure.** Claude and Codex fixtures are sanitized copies of the operator's own coding transcripts, where redacting
+  credentials and paths makes them publishable. Hermes sessions are personal conversations over Telegram and Discord plus a 14 KB system prompt, and removing secrets from a personal chat leaves a
+  personal chat. The generator reads the live store only to derive the shape; `--verify-schema` proves the fixtures still match it.
+- The schema check earned its place immediately: it failed the first run because the fixture tool vocabulary held 11 names against 37 in the live store, including a second shell tool, `bash`, that the
+  audit's top-14 had not surfaced.
+- **Confidence is lower here than for the other two providers, deliberately.** A Hermes record says a function named `terminal` was called; that it is a shell execution is our inference, so the
+  command is `derived` while the result carrying the exit code is `exact`. A `delegate_task` call becomes a `subagent.start` marked `heuristic` — the weakest marker in the vocabulary — because Hermes
+  records the delegation and nothing else.
+- The continuation-line rejoin needed a correction the test caught: concatenating the physical lines back with a real newline reproduces the same invalid JSON, because JSON forbids a raw newline
+  inside a string. The rejoin escapes it.
+- Tests: 131. Checks: 186. All six gates pass.
 
 ## 20260901_2245 — Milestone 7
 

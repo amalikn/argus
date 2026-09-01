@@ -55,6 +55,12 @@ Every script here is stdlib-only or uses the pinned Node runtime, and is invoked
 | `check_governance.py`    | `just check`            | Turns the project governance claims into        | repository tree      | stdout, non-zero exit on any     | `safe`                 | yes        |
 |                          |                         |   assertions that fail                          |                      |   failure                        |                        |            |
 
+### Why `make-hermes-fixtures.py` is `safe` where the other two are `review-required`
+
+It never copies session content. Claude and Codex fixtures are sanitized copies of the operator's own coding transcripts, where redacting credentials and paths makes them publishable. Hermes sessions
+are personal conversations carried over Telegram and Discord, and removing secrets from a personal chat leaves a personal chat. So the Hermes fixtures are synthesized to match the schema instead: the
+generator reads the live store only to derive the shape, and `--verify-schema` re-derives it to prove the fixtures have not drifted from the real format.
+
 ### Why `make-fixtures.py` is `review-required`
 
 It reads real session transcripts and writes sanitized copies into a repository that is public. Its redaction pass is followed by a verification pass that re-reads every written file and fails on any

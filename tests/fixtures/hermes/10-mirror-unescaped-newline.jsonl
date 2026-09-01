@@ -1,0 +1,5 @@
+{"role":"session_meta","tools":["terminal","read_file","patch","search_files","skill_view","write_file","memory","skill_manage","browser_navigate","execute_code","todo","browser_snapshot","browser_click","session_search","browser_console","process","browser_scroll","vision_analyze","web_search","skills_list","browser_vision","cronjob","web_extract","web_scraper","browser_type","clarify","delegate_task","bash","grep","send_message","kanban_heartbeat","kanban_show","kanban_comment","browser_get_images","kanban_block","load_skill","skill_patch"],"model":"deepseek-v4-flash","platform":"telegram","timestamp":"2026-09-01T00:00:00.000000"}
+{"role":"tool","content":"{\"success\":true,\"snapshot\":\"line one
+line two
+line three\"}","timestamp":"2026-09-01T00:00:00.000000","tool_call_id":"call_x","name":"browser_navigate"}
+{"role":"user","content":"after","timestamp":"2026-09-01T00:00:00.000000"}

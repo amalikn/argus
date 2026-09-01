@@ -2,6 +2,7 @@ import * as path from 'path';
 import { registry } from './core/adapters/registry';
 import { claudeCodeAdapter } from './adapters/claude-code';
 import { codexAdapter } from './adapters/openai-codex';
+import { hermesAdapter } from './adapters/hermes';
 import * as vscode from 'vscode';
 import { DiscoveryService } from './services/discoveryService';
 import { ParserService } from './services/parserService';
@@ -20,6 +21,9 @@ export function activate(context: vscode.ExtensionContext) {
   }
   if (!registry.get(codexAdapter.id)) {
     registry.register(codexAdapter);
+  }
+  if (!registry.get(hermesAdapter.id)) {
+    registry.register(hermesAdapter);
   }
 
   // Initialize services
