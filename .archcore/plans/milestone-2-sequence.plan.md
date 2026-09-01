@@ -13,17 +13,20 @@ promoted_by: skill-ai-it promote
 
 ## Status
 
-Accepted, not started. Gated on an explicit go at Stop 1.
+Accepted and COMPLETE. All five steps landed on 20260901 in commits `5e24a3d` (harness, fixtures, parity snapshots), `29613b4` (PricingProvider) and `3a9c9fc` (the neutral core). Stop 2 reported
+green: all 16 Claude parity snapshots unchanged.
+
+The sequence below is retained as the record of WHY the order was what it was. The reasoning is the reusable part; the ticked state is in ROADMAP.md.
 
 ## Sequence
 
-| Step | Work |
-|---|---|
-| M2.1 | Select and wire a test harness |
+| Step | Work                                                                                                                            |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------- |
+| M2.1 | Select and wire a test harness                                                                                                  |
 | M2.2 | Extract and sanitize Claude fixtures — twelve of fifteen categories are sourceable from real transcripts, three are synthesized |
-| M2.3 | Snapshot current Claude normalized behaviour |
-| M2.4 | `PricingProvider` replacing both hardcoded cost tables |
-| M2.5 | `AgentSession`, `AgentEvent`, adapter interface, registry, capabilities, diagnostics |
+| M2.3 | Snapshot current Claude normalized behaviour                                                                                    |
+| M2.4 | `PricingProvider` replacing both hardcoded cost tables                                                                          |
+| M2.5 | `AgentSession`, `AgentEvent`, adapter interface, registry, capabilities, diagnostics                                            |
 
 ## Why the order changed
 

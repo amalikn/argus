@@ -45,11 +45,22 @@ Three halts are mandatory. At each, stop and report; do not proceed without an e
 
 ## Blockers
 
-| Blocker                                               | Effect                                                | Finding |
-| ----------------------------------------------------- | ----------------------------------------------------- | ------- |
-| No test infrastructure                                | Stop 2 is not expressible until fixed                 | F1      |
-| Cost computed twice from disagreeing hardcoded tables | Multi-provider cost is wrong before it is written     | F5      |
-| Live watch owned by a UI class                        | Adapter `watch()` requires extraction, not relocation | F4      |
+All three blockers recorded at Milestone 1 are cleared.
+
+| Blocker                                               | Finding | Resolution                                                                       |
+| ----------------------------------------------------- | ------- | -------------------------------------------------------------------------------- |
+| No test infrastructure                                | F1      | vitest wired in M2.1; Stop 2 became expressible and reported green               |
+| Cost computed twice from disagreeing hardcoded tables | F5      | Both deleted in M2.4 for one `PricingProvider`; unknown model yields `undefined` |
+| Live watch owned by a UI class                        | F4      | Extracted in M3, moved to core in M6                                             |
+
+### Open
+
+| Item                                                        | Effect                                                                                              |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Generic event renderer not built                            | The webview still consumes `SessionDetail`, so Codex and Hermes sessions parse but are not viewable |
+| Never launched in an Extension Development Host             | Every gate is static; nothing proves it renders a session                                           |
+| Codex tiered above-threshold pricing stored but not applied | Very long turns are costed at the base rate                                                         |
+| Codex writes two rollout format generations                 | Both are read, but a third will arrive unannounced                                                  |
 
 ## Completed
 

@@ -13,6 +13,17 @@ Project-specific conventions only. Language defaults are not restated here.
 | Normalized event kinds | dotted, lowercase                                    | `shell.command`, `file.edit`, `mcp.call`                                            |
 | Scripts                | verb-first, hyphenated, extension states the runtime | `refresh-pricing.mjs`, `baseline-gates.sh`, `fixture-scan.py` <!-- path:example --> |
 
+## Test fixture layout
+
+| Path                                 | Convention                                                                                                                                                    |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tests/fixtures/claude/`             | One file per category, named `NN-slug.jsonl`. Harvested and sanitized from real transcripts                                                                   |
+| `tests/fixtures/claude/06-subagent/` | A DIRECTORY, not a file: `session.jsonl` beside `session/subagents/agent-*.jsonl`. Claude stores a subagent as a sibling directory, so a single file cannot   |
+|                                      |   represent one                                                                                                                                               |
+| `tests/fixtures/codex/`              | One file per category. Harvested and sanitized; two rollout format generations are represented                                                                |
+| `tests/fixtures/hermes/`             | SYNTHESIZED from the observed schema, never harvested. Hermes sessions are personal conversations                                                             |
+| `tests/__snapshots__/`               | Generated behavioural baselines. A moved snapshot is a behaviour change and needs the same review as a code change                                            |
+
 ## Runtime and invocation
 
 - Every task goes through `just`. Recipes resolve interpreters by absolute path; `just doctor` prints what resolved.

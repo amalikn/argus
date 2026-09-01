@@ -626,9 +626,136 @@ def check_supersession_chain() -> None:
                 fail("archcore", f"{target} is superseded by {name} but is not marked status: superseded")
 
 
+
+# Surfaces that are DATED EVIDENCE: a record of what was true at a moment, not a live claim. They carry an
+# explicit banner saying so, and that banner is what exempts them. Exempting by filename would let any file
+# escape by being added to a list; exempting by an in-file statement means the document has to say so itself.
+HISTORICAL_BANNER = "Dated evidence"
+
+
+def _roadmap_resolved_findings() -> set[str]:
+    """Findings ROADMAP records as cleared, read from its resolution table."""
+    text = read("ROADMAP.md") or ""
+    section = text.split("## Blockers", 1)[-1].split("## Completed", 1)[0]
+    if "cleared" not in section:
+        return set()
+    return set(re.findall(r"\bF\d+\b", section))
+
+
+def _roadmap_completed_milestones() -> set[str]:
+    """Milestones ROADMAP ticks as complete."""
+    text = read("ROADMAP.md") or ""
+    return set(re.findall(r"^- \[x\] \*\*(M\d+)", text, re.M))
+
+
+def check_no_resolved_finding_asserted_open() -> None:
+    """No live surface claims a finding is open that ROADMAP records as cleared.
+
+    THE CLASS THIS CATCHES. Every other check here compares a claim to ground truth. This one compares a claim to
+    ANOTHER CLAIM, which is the class an audit structurally misses: prose asserting "the test gate fails until F1 is
+    resolved" has no file to check against, so it survives every path, count and catalog check and goes on instructing
+    readers long after it stopped being true.
+
+    Found on 20260901 in three places at once, one of them an ACCEPTED archcore guide that outranks AGENTS.md in the
+    source-priority order, and one of them a ROADMAP fix that had silently no-opped because it anchored on table text
+    the formatter had already padded.
+
+    Rule: ROADMAP.md is the completion surface. A document that disagrees with it about whether work is done is wrong
+    unless it declares itself dated evidence.
+    """
+    resolved = _roadmap_resolved_findings()
+    completed = _roadmap_completed_milestones()
+    if not resolved and not completed:
+        return
+
+    open_claim = [re.compile(p, re.I) for p in (
+        r"until finding (F\d+) is resolved",
+        r"fails? until finding (F\d+)",
+        r"blocked by (F\d+)",
+        r"(F\d+) (?:is )?(?:still )?(?:open|unresolved|outstanding)",
+    )]
+    not_started = re.compile(r"\b(M\d+|Milestone \d+)\b[^.\n]{0,80}\bnot started\b", re.I)
+
+    for surface in ROOT.rglob("*.md"):
+        rel = surface.relative_to(ROOT).as_posix()
+        if rel.startswith((".staleness-audit/", "node_modules/", ".ai-context/", "graphify-out/")):
+            continue
+        text = surface.read_text(encoding="utf-8", errors="replace")
+        if HISTORICAL_BANNER in text:
+            continue  # declares itself a record of what was true then
+        counted()
+
+        body = without_code(text)
+        for pattern in open_claim:
+            for match in pattern.finditer(body):
+                finding = match.group(1).upper()
+                if finding in resolved:
+                    fail("staleness", f"{rel} says {finding} is open, but ROADMAP.md records it as cleared")
+
+        for match in not_started.finditer(body):
+            token = match.group(1).upper().replace("MILESTONE ", "M")
+            if token in completed:
+                fail("staleness", f"{rel} says {token} is not started, but ROADMAP.md ticks it complete")
+
+
+def check_capability_types_mirror() -> None:
+    """The webview capability type mirrors the extension-side one, field for field.
+
+    webview/src/types/session.ts declares SessionCapabilities by hand because the webview must not import the adapter
+    contract. Nothing makes the two stay in step, so adding a capability on one side and forgetting the other produces
+    a panel that renders from a flag the other side never sets - and it type-checks on both sides.
+
+    Rule: CONVENTIONS.md, "Normalized types are discriminated unions"; ARCHITECTURE.md capability layering.
+    """
+    ext = read("src/types/models.ts")
+    web = read("webview/src/types/session.ts")
+    if ext is None or web is None:
+        return
+
+    def fields(text: str) -> set[str]:
+        block = re.search(r"interface SessionCapabilities \{(.*?)\n\}", text, re.S)
+        return set(re.findall(r"^\s*(\w+)\s*:", block.group(1), re.M)) if block else set()
+
+    counted()
+    a, b = fields(ext), fields(web)
+    if not a or not b:
+        fail("types", "SessionCapabilities could not be located on both sides of the webview boundary")
+        return
+    if a != b:
+        only_ext = sorted(a - b)
+        only_web = sorted(b - a)
+        fail("types", f"SessionCapabilities has drifted: extension-only {only_ext}, webview-only {only_web}")
+
+
+
+def check_architecture_names_every_source_dir() -> None:
+    """ARCHITECTURE.md names every directory under src/.
+
+    The orphan direction that grows silently. Found on 20260901 by an inverse sweep: the architecture document of a
+    provider-neutral fork named NO adapter at all - src/adapters and all three provider directories, plus
+    src/core/adapters and src/core/models, were absent. The component table had been written at Milestone 1 against the
+    upstream tree and never grew with the code. Every path IN it resolved, so path checking had nothing to say.
+
+    Rule: ARCHITECTURE.md is the component map. A directory the map does not name is a component nobody documented.
+    """
+    text = read("ARCHITECTURE.md")
+    src = ROOT / "src"
+    if text is None or not src.is_dir():
+        return
+    body = without_code(text)
+    for directory in sorted(p for p in src.rglob("*") if p.is_dir()):
+        rel = directory.relative_to(ROOT).as_posix()
+        counted()
+        if rel not in body:
+            fail("architecture", f"{rel} exists but ARCHITECTURE.md does not name it")
+
+
 # --------------------------------------------------------------------------------------------------------------- MAIN
 
 CHECKS = (
+    check_architecture_names_every_source_dir,
+    check_no_resolved_finding_asserted_open,
+    check_capability_types_mirror,
     check_archcore_frontmatter,
     check_supersession_chain,
     check_referenced_paths,

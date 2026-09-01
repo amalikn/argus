@@ -17,6 +17,14 @@ Milestone 1 deliverable. Produced 2026-09-01 before any architecture change.
 
 ---
 
+> **Dated evidence, 20260901.** This document records what was measured at upstream commit `3bfbd8b`, before any architecture change. Its findings, tables and verdicts are a snapshot of that moment
+> and are NOT current state — F1, F4 and F5 have since been resolved, and the "Not verified" and "Effect on the remaining milestones" sections below describe what was open then.
+>
+> **What still stands:** every measurement in it — the gate results, the component map, the fixture inventory, the pricing arithmetic. Those were true of `3bfbd8b` and remain the baseline everything
+> since is measured against.
+>
+> For current state read [ROADMAP.md](../../ROADMAP.md) and [SCRATCHPAD.md](../../SCRATCHPAD.md).
+
 ## Scope and method
 
 Audits the upstream repository as cloned, records the real result of every quality gate it exposes, maps its code to the conceptual roles the implementation plan assumes, and inventories the local

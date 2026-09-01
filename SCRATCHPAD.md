@@ -15,6 +15,7 @@ explicitly marked KEEP.
 - [Recent decisions](#recent-decisions)
 - [Session history (summaries — full detail in claude-mem)](#session-history-summaries-full-detail-in-claude-mem)
 - [Next actions](#next-actions)
+- [Residual risk — what the 20260901 staleness audit did NOT resolve](#residual-risk-what-the-20260901-staleness-audit-did-not-resolve)
 - [Memory pointers (navigation only — content is above)](#memory-pointers-navigation-only-content-is-above)
 
 ---
@@ -108,6 +109,45 @@ discoverable, parseable, watchable and scale-tested. The UI reads provider ident
 - Consider the generic event renderer now that two real provider shapes exist to design against.
 
 ---
+
+## Residual risk — what the 20260901 staleness audit did NOT resolve
+
+<!-- KEEP -->
+
+Written so a clean run is never mistaken for a verified one.
+
+| Item                                                            | Why it is unresolved                                                                       | What would settle it                  |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------- |
+| The extension has never run in an Extension Development Host    | Every gate is static: build, lint, compile, package, test. Nothing proves it renders a     | Launch it and open one session per    |
+|                                                                 |   session                                                                                  |   provider                            |
+| Codex and Hermes sessions are not viewable                      | The webview consumes `SessionDetail`, not `AgentEvent`                                     | The generic event renderer            |
+| The Hermes adapter rests on a NEGATIVE finding                  | `tokenUsage`/`cost` are false because no usage field exists anywhere in the audited store. | Re-run `just fixtures-verify` after   |
+|                                                                 |   If Hermes starts recording usage, the flags become wrong.                                |   any Hermes upgrade                  |
+|                                                                 |   `make-hermes-fixtures.py --verify-schema` checks for usage keys appearing, and           |                                       |
+|                                                                 |   `tests/hermes-adapter.test.ts` asserts the false values, so the assumption fails loudly  |                                       |
+|                                                                 |   rather than silently                                                                     |                                       |
+| Hermes fixtures are synthesized, not harvested                  | They prove the adapter handles the SHAPE. They cannot prove it handles content variety the | Nothing safe. Hermes sessions are     |
+|                                                                 |   way the Claude and Codex corpora do                                                      |   personal conversations              |
+| The installed Hermes build is four months behind upstream       | The audited formats are what a 2026-05 build wrote                                         | Upgrade Hermes, re-run the audit      |
+|   `5a8e8a6b`                                                    |                                                                                            |                                       |
+| Codex may ship a third rollout format                           | Two exist and both are read; a third would fall through to `provider.unknown`              | Nothing, by construction. The         |
+|                                                                 |                                                                                            |   fall-through is the mitigation      |
+| Codex tiered above-threshold pricing is stored but not applied  | Long turns are costed at the base rate                                                     | Apply the `tiers` field in            |
+|                                                                 |                                                                                            |   `PricingProvider`                   |
+| `fs.watch` does not report every change on every platform       | A missed event means a stale view until the next write, not corruption                     | Platform-specific; not worth fixing   |
+|                                                                 |                                                                                            |   before the renderer exists          |
+| The LiteLLM pricing URL is an external dependency               | `upstreamSha256` makes staleness visible, but the path could move                          | `just pricing-check` on a schedule    |
+| `.archcore/README.md` filename conflicts with `archcore status` | Two authorities disagree; deliberately not silenced                                        | An operator decision                  |
+| Prices in `src/pricing/model-pricing.json` were NOT regenerated | A price change is a behaviour change and does not belong in a staleness pass               | `just pricing-refresh`, reviewed as   |
+|   during this audit                                             |                                                                                            |   its own change                      |
+
+### My own errors this run
+
+- **Finding 5 was self-inflicted.** An earlier ROADMAP edit anchored on table text that `table-reflow` had already padded, so it silently no-opped and the blockers table kept listing three cleared
+  blockers as open. I had recorded that exact hazard as a lesson earlier in the same session and repeated it anyway, because nothing checked for the result. `check_no_resolved_finding_asserted_open`
+  now does.
+- **The audit tool itself introduced finding 6**, appending to the tracked `.gitignore` and contradicting an accepted ADR. Restored byte-exact and routed to `.git/info/exclude`.
+- **Commit `05403dd` carries a damaged message** — two words lost to shell backtick expansion. Corrected by a git note rather than a force-push.
 
 ## Memory pointers (navigation only — content is above)
 

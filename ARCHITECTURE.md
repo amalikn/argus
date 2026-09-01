@@ -2,6 +2,18 @@
 
 Describes the fork as it stands at Milestone 1, and the target shape the plan moves it toward. Where the two differ, both are stated: the current column is measured, the target column is designed.
 
+## Contents
+
+- [Overview](#overview)
+- [Current components (measured 20260901 at commit 3bfbd8b)](#current-components-measured-20260901-at-commit-3bfbd8b)
+- [Components added by the fork](#components-added-by-the-fork)
+- [Target layering](#target-layering)
+- [Key decisions and constraints](#key-decisions-and-constraints)
+- [Known structural obstacles](#known-structural-obstacles)
+- [Related documents](#related-documents)
+
+---
+
 ## Overview
 
 A VS Code extension that reads AI coding-agent session transcripts off local disk, normalizes them, analyzes them, and renders them as inspectable timelines, cost views and dependency graphs. It is
@@ -11,22 +23,38 @@ Upstream reads Claude Code only. The fork adds OpenAI Codex and Hermes behind a 
 
 ## Current components (measured 20260901 at commit 3bfbd8b)
 
-| Component          | File                                           | Lines       | Role                                                                                  |
-| ------------------ | ---------------------------------------------- | ----------- | ------------------------------------------------------------------------------------- |
-| Entry point        | `src/extension.ts`                             | 316         | Activation, command registration, session-list file watcher                           |
-| Discovery          | `src/services/discoveryService.ts`             | 320         | Locates `~/.claude/projects/<project>/*.jsonl`, fixed depth                           |
-| Parser             | `src/services/parserService.ts`                | 506         | Streams JSONL via readline, builds steps, resolves subagents, computes cost           |
-| Analyzer           | `src/services/analyzerService.ts`              | 559         | Six rules over parsed steps                                                           |
-| Raw provider types | `src/types/parser.ts`                          | 116         | Claude-shaped records: `RawEvent`, `ToolUseResult*`                                   |
-| Domain types       | `src/types/models.ts`                          | 258         | `SessionSummary`, `SessionDetail`, `Step`, `Usage`, plus a second cost implementation |
-| Session list UI    | `src/providers/sessionListViewProvider.ts`     | 1138        | Tree view, filtering, grouping                                                        |
-| Session detail UI  | `src/providers/sessionWebviewProviderReact.ts` | 370         | Webview host; also owns live `fs.watch`                                               |
-| Date filter UI     | `src/providers/datePickerPanel.ts`             | 147         |                                                                                       |
-| Path resolution    | `src/utils/claudePaths.ts`                     | 15          | Honours `CLAUDE_CONFIG_DIR`                                                           |
-| Webview            | `webview/src/**`                               | ~4733       | React 19, 14 components, charts, dependency graph                                     |
-| Pricing data       | `src/pricing/model-pricing.json`               | 2571 models | Vendored LiteLLM dataset, added by the fork                                           |
+| Component          | File                                           | Lines       | Role                                                                                         |
+| ------------------ | ---------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------- |
+| Entry point        | `src/extension.ts`                             | 316         | Activation, command registration, session-list file watcher                                  |
+| Discovery          | `src/services/discoveryService.ts`             | 320         | Locates `~/.claude/projects/<project>/*.jsonl`, fixed depth                                  |
+| Parser             | `src/services/parserService.ts`                | 506         | Streams JSONL via readline, builds steps, resolves subagents, computes cost                  |
+| Analyzer           | `src/services/analyzerService.ts`              | 559         | Six rules over parsed steps                                                                  |
+| Raw provider types | `src/types/parser.ts`                          | 116         | Claude-shaped records: `RawEvent`, `ToolUseResult*`                                          |
+| Domain types       | `src/types/models.ts`                          | 258         | `SessionSummary`, `SessionDetail`, `Step`, `Usage`, plus a second cost implementation        |
+| Session list UI    | `src/providers/sessionListViewProvider.ts`     | 1138        | Tree view, filtering, grouping                                                               |
+| Session detail UI  | `src/providers/sessionWebviewProviderReact.ts` | 370         | Webview host; also owns live `fs.watch`                                                      |
+| Date filter UI     | `src/providers/datePickerPanel.ts`             | 147         |                                                                                              |
+| Path resolution    | `src/utils/claudePaths.ts`                     | 15          | Honours `CLAUDE_CONFIG_DIR`                                                                  |
+| Webview            | `webview/src/**`                               | ~4733       | React 19, 14 components, charts, dependency graph. `webview/src/styles` holds the shared CSS |
+| Pricing data       | `src/pricing/model-pricing.json`               | 2571 models | Vendored LiteLLM dataset, added by the fork                                                  |
 
 The UI is the larger half of the codebase. The core model refactor is not the biggest chunk of work; provider-neutralizing the webview is.
+
+## Components added by the fork
+
+The table above measures the upstream tree at `3bfbd8b`. Everything below was added by Milestones 2 to 8, and is the part a reader looking for the provider-neutral architecture actually needs.
+
+| Directory                   | Role                                                                                                                              |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `src/core/models`           | `AgentSession`, the 17-kind `AgentEvent` union, capabilities, diagnostics, schema version and migrations                          |
+| `src/core/adapters`         | The `AgentAdapter` contract and the registry. The only place provider knowledge is allowed                                        |
+| `src/core/pricing`          | `PricingProvider` over the vendored table. An unknown model yields undefined, never another model rates                           |
+| `src/core/watch`            | `SessionFileWatcher`. Debounce, size deduplication, lazy sibling-directory mount. Shared by all providers                         |
+| `src/adapters`              | One directory per provider. Adding an agent means adding one here and nothing else                                                |
+| `src/adapters/claude-code`  | Reference implementation. Delegates parsing to the unchanged `ParserService`, which is what keeps the parity snapshots meaningful |
+| `src/adapters/openai-codex` | Streaming rollout parser reading both format generations, with offset-resumable incremental reads                                 |
+| `src/adapters/hermes`       | Reads the `session_*.json` snapshot as primary and the `*.jsonl` mirror as secondary                                              |
+| `src/pricing`               | The vendored pricing table. Generated by `scripts/refresh-pricing.mjs`; never hand-edited                                         |
 
 ## Target layering
 
@@ -65,10 +93,21 @@ Raw JSONL / logs / SQLite
 
 ## Known structural obstacles
 
-- **No test harness exists.** `package.json` declares a test script pointing at a path that has never existed. The parity snapshot the refactor must preserve has nowhere to live until this is fixed.
-- **Live watching lives in the webview provider**, not a service. Moving `watch()` onto the adapter means extracting it from a UI class.
-- **Cost is implemented twice**, in `parserService.ts` and `types/models.ts`, from two disagreeing hardcoded tables.
-- **Subagents are sibling files**, at `<projectDir>/<sessionId>/subagents/`, not inline records. The normalized model must link them by `parentSessionId` rather than assume nesting.
+- **Subagents are sibling files**, at `<projectDir>/<sessionId>/subagents/`, not inline records. The normalized model links them by `parentSessionId` rather than assuming nesting.
+- **The webview still consumes `SessionDetail` and `Step`**, not `AgentEvent`. Codex and Hermes sessions are discovered, parsed and capability-flagged with nothing to render them. This is the largest
+  open item.
+- **The extension has never been launched in an Extension Development Host.** Every gate is static — build, lint, compile, package, test. Nothing yet proves it renders a session on screen.
+
+### Resolved since this document was first written
+
+Kept rather than deleted, because the shape of the codebase still reflects how each was fixed.
+
+| Obstacle                                              | Finding | Resolution                                                                                                                         |
+| ----------------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| No test harness existed                               | F1      | vitest wired in Milestone 2.1; all six gates pass                                                                                  |
+| Live watching lived in the webview provider           | F4      | Extracted in Milestone 3, then moved to `src/core/watch/sessionFileWatcher.ts` in Milestone 6 when Codex needed the same behaviour |
+| Cost implemented twice from two disagreeing hardcoded | F5      | Both deleted in Milestone 2.4 for one `src/core/pricing/pricingProvider.ts`                                                        |
+|   tables                                              |         |                                                                                                                                    |
 
 ## Related documents
 

@@ -4,6 +4,7 @@ Durable project and governance history. Append entries; do not rewrite historica
 
 ## Contents
 
+- [20260901_2359 — Staleness audit](#20260901_2359-staleness-audit)
 - [20260901_2330 — Milestone 8](#20260901_2330-milestone-8)
 - [20260901_2245 — Milestone 7](#20260901_2245-milestone-7)
 - [20260901_2200 — Milestone 6, Stop 3](#20260901_2200-milestone-6-stop-3)
@@ -20,6 +21,55 @@ Durable project and governance history. Append entries; do not rewrite historica
 - [20260901_1708](#20260901_1708)
 
 ---
+
+## 20260901_2359 — Staleness audit
+
+A repo-wide audit for facts that had quietly stopped being true. The standard was "would a careful reader be misled", not "does the suite pass" — it passed throughout, at 188 checks, while eight
+defects sat in the documents.
+
+### Findings and fixes
+
+| #   | Materiality | Defect                                                                                                                   | Fix                                                   |
+| --- | ----------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| 1   | M           | `.archcore/guides/baseline-gate-procedure.guide.md`, an ACCEPTED guide at the top of the source-priority order, said the | Outcome section corrected; the old state kept under a |
+|     |             |   `test` gate fails and that the failure is expected. Its "Do not" section then told the reader not to treat the         |   History heading, because a reader on an old branch  |
+|     |             |   baseline as green                                                                                                      |   still needs it                                      |
+| 2   | M           | `AGENTS.md` carried the same claim as live agent policy                                                                  | Corrected to state that all six gates pass and a red  |
+|     |             |                                                                                                                          |   gate is a live regression                           |
+| 3   | H           | `.archcore/plans/milestone-2-sequence.plan.md` said "Accepted, not started" for work completed in three commits          | Marked complete; the sequence retained as the record  |
+|     |             |                                                                                                                          |   of why the order was what it was                    |
+| 4   | H           | `ARCHITECTURE.md` listed four known structural obstacles, three of them resolved                                         | Open items rewritten; the resolved three moved to a   |
+|     |             |                                                                                                                          |   table that records how each was fixed               |
+| 5   | G           | `ROADMAP.md` still listed all three Milestone 1 blockers as open. A fix earlier in the session had SILENTLY NO-OPPED     | Rewritten by section boundary rather than by string   |
+|     |             |   because it anchored on table text `table-reflow` had already padded                                                    |   match                                               |
+| 6   | G           | `audit_state.py init` appended to the tracked `.gitignore`, contradicting the accepted ADR that routes generated         | `.gitignore` restored byte-exact; the entry moved to  |
+|     |             |   artifacts to `.git/info/exclude`                                                                                       |   `.git/info/exclude`                                 |
+| 7   | G           | The Milestone 1 audit's "Not verified" and "Effect on the remaining milestones" sections read as current state           | Dated-evidence banner added, naming what still stands |
+|     |             |                                                                                                                          |   rather than dismissing the document                 |
+| 8   | H           | `ARCHITECTURE.md` named NO adapter at all: `src/adapters` and all three providers, plus `src/core/adapters` and          | Components-added-by-the-fork table written; now       |
+|     |             |   `src/core/models`, were absent. The component table was written at Milestone 1 against the upstream tree and never     |   enforced                                            |
+|     |             |   grew. Every path IN it resolved, so path checking said nothing                                                         |                                                       |
+
+### Checks added, all four proven able to fail
+
+- `check_no_resolved_finding_asserted_open` — the claim-versus-claim class. Compares a document's assertion against `ROADMAP.md` as the completion surface, rather than against ground truth. Would have
+  caught findings 1, 2, 3 and 5. Exempts a document that declares itself dated evidence, so history is marked rather than rewritten.
+- `check_architecture_names_every_source_dir` — every directory under `src/` must be named in `ARCHITECTURE.md`. Catches finding 8 and every future recurrence.
+- `check_capability_types_mirror` — `SessionCapabilities` must match field for field across the webview boundary, where it is declared twice by hand and nothing kept the two in step.
+- `check_supersession_chain` — added during Milestone 7, listed here for completeness.
+
+### Also changed, outside this repo
+
+Three improvements to `skill-staleness-audit` itself, each caused by a real blind spot on this project: the coverage rule list gained `.tsx`, `.mjs`, `.css`, `.snap` and media (38 files, 21% of the
+repo, were unclassified and the accounting reported coverage it did not have); the inverse sweep's default catalog list gained `ARCHITECTURE.md`, `CONVENTIONS.md`, `scripts/README.md` and
+`.archcore/README.md`; and its skip list gained build and generator output, because cataloging a compiler's output directory is never right.
+
+### Notes
+
+- Checks rose from 188 to 256. Coverage reconciles: 178 files = 139 examined + 39 exempt.
+- A residual-risk register was written into `SCRATCHPAD.md`, including my own errors — finding 5 was self-inflicted, and I had recorded that exact hazard as a lesson earlier the same day.
+- What this audit does NOT establish: that any claim about the external world is still true. Model prices, upstream formats and vendor behaviour cannot be settled by reading the project. For those the
+  audit verified the provenance label and the as-at date only.
 
 ## 20260901_2330 — Milestone 8
 

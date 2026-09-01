@@ -60,7 +60,7 @@ Every task goes through `just`. Recipes resolve interpreters by absolute path; `
 ## Working rules
 
 - Read [AI_NAVIGATION.md](AI_NAVIGATION.md) before answering, planning or editing.
-- Run `just baseline` before claiming a change builds. The `test` gate fails until finding F1 is resolved; that failure is expected and recorded, not a licence to skip the run.
+- Run `just baseline` before claiming a change builds. All six gates pass; a red gate is a live regression, not a known state. Finding F1, which made the `test` gate fail at the baseline, was closed in Milestone 2.1.
 - Model pricing is a build-time asset. Refresh it with `just pricing-refresh`; never fetch pricing at runtime.
 - Time-bound documents use `<slug>-YYYYMMDD_hhmm.md`. Stable entrypoints keep their names.
 - Milestones halt at their stop gates. Do not carry work past a stop without an explicit go.

@@ -23,11 +23,19 @@ Before claiming any change builds, and whenever the upstream baseline needs re-m
 4. Logs land in `tools-runtime/argus/logs/`, one per gate, plus a timestamped report naming them.
 5. `just baseline-quick` skips the VSIX build for a faster inner loop.
 
-## Expected outcome as at 20260901
+## Expected outcome
 
-Install, lint, compile, build:webview and package pass. `test` fails with `MODULE_NOT_FOUND`, because `package.json` declares a test script pointing at a path that has never existed in the
-thirty-six-commit upstream history and no runner is present in the dependency tree. That failure is finding F1 and is expected until Milestone 2 adds a harness.
+All six gates pass: install, lint, compile, build:webview, test, package. `failed gates: 0`.
+
+Lint reports four `no-unused-vars` warnings inherited from upstream. Warnings do not fail the gate.
+
+### History
+
+Until Milestone 2.1 the `test` gate failed with `MODULE_NOT_FOUND`, because `package.json` declared a test script pointing at a path that had never existed in the thirty-six-commit upstream history and
+no runner was present in the dependency tree. That was finding F1, and it was recorded rather than hidden. Commit `5e24a3d` wired vitest and closed it. This paragraph is kept because a reader who finds
+an old branch or an old VSIX needs to know that a red `test` gate there is the known baseline state, not a new regression.
 
 ## Do not
 
-Do not redefine the baseline as green by removing or ignoring the failing gate. The failure is the finding.
+Do not redefine a failing gate as green by removing or ignoring it. The gates are all passing now, so any red gate is a live regression rather than a known state — which is precisely the condition this
+procedure exists to surface.
