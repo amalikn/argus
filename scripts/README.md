@@ -35,23 +35,25 @@ This file describes runnable scripts, task runners, and automation entrypoints i
 
 Every script here is stdlib-only or uses the pinned Node runtime, and is invoked through `just` rather than directly. `just doctor` prints the interpreters that will actually be used.
 
-| Script                | Task                    | Purpose                                            | Inputs               | Outputs                          | Safety                 | Idempotent |
-| --------------------- | ----------------------- | -------------------------------------------------- | -------------------- | -------------------------------- | ---------------------- | ---------- |
-| `baseline-gates.sh`   | `just baseline`         | Runs every quality gate and records pass or fail   | none                 | logs under                       | `safe`, `long-running` | yes        |
-|                       |                         |   for each, exiting with the failure count         |                      |   `tools-runtime/argus/logs/`,   |                        |            |
-|                       |                         |                                                    |                      |   VSIX under                     |                        |            |
-|                       |                         |                                                    |                      |   `tools-runtime/argus/`         |                        |            |
-| `fixture-scan.py`     | `just fixture-scan`     | Classifies local transcripts against the 15        | `~/.claude/projects` | stdout, optional JSON via        | `safe`                 | yes        |
-|                       |                         |   fixture categories; prints paths and counts      |   read-only          |   `--json`                       |                        |            |
-|                       |                         |   only, never content                              |                      |                                  |                        |            |
-| `refresh-pricing.mjs` | `just pricing-refresh`, | Refreshes and drift-checks the vendored model      | LiteLLM dataset over | `src/pricing/model-pricing.json` | `safe`,                | yes        |
-|                       |   `just pricing-check`  |   pricing table                                    |   HTTPS              |                                  |   `external-network`,  |            |
-|                       |                         |                                                    |                      |                                  |   `modifies-files`     |            |
-| `make-fixtures.py`    | `just fixtures`         | Harvests and sanitizes the Claude fixture corpus,  | `~/.claude/projects` | `tests/fixtures/claude/`         | `review-required`,     | yes        |
-|                       |                         |   synthesizes the three failure modes, and         |   read-only          |                                  |   `modifies-files`     |            |
-|                       |                         |   verifies no secret survived                      |                      |                                  |                        |            |
-| `check_governance.py` | `just check`            | Turns the project governance claims into           | repository tree      | stdout, non-zero exit on any     | `safe`                 | yes        |
-|                       |                         |   assertions that fail                             |                      |   failure                        |                        |            |
+| Script                   | Task                    | Purpose                                         | Inputs               | Outputs                          | Safety                 | Idempotent |
+| ------------------------ | ----------------------- | ----------------------------------------------- | -------------------- | -------------------------------- | ---------------------- | ---------- |
+| `baseline-gates.sh`      | `just baseline`         | Runs every quality gate and records pass or     | none                 | logs under                       | `safe`, `long-running` | yes        |
+|                          |                         |   fail for each, exiting with the failure count |                      |   `tools-runtime/argus/logs/`,   |                        |            |
+|                          |                         |                                                 |                      |   VSIX under                     |                        |            |
+|                          |                         |                                                 |                      |   `tools-runtime/argus/`         |                        |            |
+| `fixture-scan.py`        | `just fixture-scan`     | Classifies local transcripts against the 15     | `~/.claude/projects` | stdout, optional JSON via        | `safe`                 | yes        |
+|                          |                         |   fixture categories; prints paths and counts   |   read-only          |   `--json`                       |                        |            |
+|                          |                         |   only, never content                           |                      |                                  |                        |            |
+| `refresh-pricing.mjs`    | `just pricing-refresh`, | Refreshes and drift-checks the vendored model   | LiteLLM dataset over | `src/pricing/model-pricing.json` | `safe`,                | yes        |
+|                          |   `just pricing-check`  |   pricing table                                 |   HTTPS              |                                  |   `external-network`,  |            |
+|                          |                         |                                                 |                      |                                  |   `modifies-files`     |            |
+| `make-fixtures.py`       | `just fixtures`         | Harvests and sanitizes the Claude fixture       | `~/.claude/projects` | `tests/fixtures/claude/`         | `review-required`,     | yes        |
+|                          |                         |   corpus, synthesizes the three failure modes,  |   read-only          |                                  |   `modifies-files`     |            |
+|                          |                         |   and verifies no secret survived               |                      |                                  |                        |            |
+| `make-codex-fixtures.py` | `just codex-fixtures`   | Harvests and sanitizes the Codex rollout        | `~/.codex/sessions`  | `tests/fixtures/codex/`          | `review-required`,     | yes        |
+|                          |                         |   fixtures and verifies no secret survived      |   read-only          |                                  |   `modifies-files`     |            |
+| `check_governance.py`    | `just check`            | Turns the project governance claims into        | repository tree      | stdout, non-zero exit on any     | `safe`                 | yes        |
+|                          |                         |   assertions that fail                          |                      |   failure                        |                        |            |
 
 ### Why `make-fixtures.py` is `review-required`
 

@@ -18,11 +18,17 @@ mise    := "/opt/homebrew/bin/mise"
 bash    := "/opt/homebrew/bin/bash"
 venv    := cache / "venv"
 python  := venv / "bin/python"
+# Interpreter used ONLY to create the venv. Everything afterwards goes through {{python}}.
+python_bootstrap := "/opt/homebrew/opt/python@3.14/bin/python3.14"
 
 # Resolved at parse time from the mise pin, so a version bump in .mise.toml is picked up without editing this file.
-node := `/opt/homebrew/bin/mise which node 2>/dev/null || echo node`
-npm  := `/opt/homebrew/bin/mise which npm 2>/dev/null || echo npm`
-npx  := `/opt/homebrew/bin/mise which npx 2>/dev/null || echo npx`
+#
+# These are backticks rather than {{mise}} because just does NOT interpolate its own variables inside a backtick —
+# the literal `{{mise}}` reaches the shell and the command fails. So mise is named once here, overridable with
+# MISE_BIN, and npm and npx are derived from wherever node resolved rather than resolved again.
+node := `"${MISE_BIN:-/opt/homebrew/bin/mise}" which node 2>/dev/null || echo node`
+npm  := parent_directory(node) / "npm"
+npx  := parent_directory(node) / "npx"
 
 export npm_config_cache := cache / "npm-cache"
 
@@ -50,7 +56,7 @@ setup-python:
     #!/opt/homebrew/bin/bash
     set -euo pipefail
     if [ ! -x "{{python}}" ]; then
-      /opt/homebrew/opt/python@3.14/bin/python3.14 -m venv "{{venv}}"
+      "{{python_bootstrap}}" -m venv "{{venv}}"
     fi
     "{{python}}" --version
 
@@ -105,9 +111,14 @@ _require-venv:
 fixtures: _require-venv
     {{python}} scripts/make-fixtures.py
 
+# Rebuild the sanitized Codex rollout fixtures.
+codex-fixtures: _require-venv
+    {{python}} scripts/make-codex-fixtures.py
+
 # Verify the existing fixtures carry no forbidden pattern, without rebuilding them.
 fixtures-verify: _require-venv
     {{python}} scripts/make-fixtures.py --verify-only
+    {{python}} scripts/make-codex-fixtures.py --verify-only
 
 # Governance coherence checks. Must exit 0 before durable work is called complete.
 check: _require-venv

@@ -4,6 +4,7 @@ Durable project and governance history. Append entries; do not rewrite historica
 
 ## Contents
 
+- [20260901_2130 — Milestone 5](#20260901_2130-milestone-5)
 - [20260901_2045 — Milestone 4](#20260901_2045-milestone-4)
 - [20260901_2015 — Milestone 3, Stop 2](#20260901_2015-milestone-3-stop-2)
 - [20260901_1950 — Milestone 2.5](#20260901_1950-milestone-25)
@@ -16,6 +17,27 @@ Durable project and governance history. Append entries; do not rewrite historica
 - [20260901_1708](#20260901_1708)
 
 ---
+
+## 20260901_2130 — Milestone 5
+
+### Added
+
+- `scripts/make-codex-fixtures.py` and `just codex-fixtures`: nine sanitized Codex rollout fixtures harvested from real sessions by predicate, plus two synthesized failure modes.
+- `src/adapters/openai-codex/`: `types.ts`, a streaming `parser.ts`, and `CodexAdapter` implementing the adapter contract.
+- `tests/codex-adapter.test.ts`: 21 tests over detection, date-partition discovery, parsing, capability derivation and both format generations.
+- The Codex adapter is registered at activation.
+
+### Notes
+
+- **Codex writes two different rollout formats, and both exist in a real store.** Builds up to roughly 2026-06 emit `exec_command_end`, `patch_apply_end` and bare message payloads; builds from 2026-08
+  wrap everything in `event_msg/item_completed` with a typed `item`. This was found by parsing the local store, not from any changelog, and an adapter reading only one generation would have shown
+  empty sessions for half the machine. The parser reads both.
+- The newer generation records more than the older one: `ContextCompaction`, `SubAgentActivity` and `CollabAgentToolCall`, so Codex does have subagents where the older format showed none.
+- Codex records shell exit codes, so `shell.command` events are marked `exact` here where the Claude adapter marks the same field `derived`. That difference is exactly what the confidence marker
+  exists to express.
+- Capabilities are derived from what each session actually contained, not from what Codex can do in principle.
+- Discovery walks `YYYY/MM/DD` partitions rather than recursing, because the Codex home also holds caches, attachments and archived sessions that must not be ingested as evidence.
+- Tests: 106. All six gates pass.
 
 ## 20260901_2045 — Milestone 4
 

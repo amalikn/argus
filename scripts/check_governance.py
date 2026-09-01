@@ -189,6 +189,16 @@ EXTERNAL_REFS: frozenset[str] = frozenset({
     "feat/multi-agent-observability",
 })
 
+# Path-shaped tokens that are NOTATION rather than references: a filename template, or a provider's own record
+# type spelled with a slash. Registered explicitly rather than pattern-matched, so adding one is a decision
+# someone made rather than a hole the resolver quietly grew.
+NOTATION: frozenset[str] = frozenset({
+    "YYYY/MM/DD",              # Codex rollout date partitions
+    "event_msg/item_completed",  # a Codex record type, not a path
+    "response_item/function_call",
+    "response_item/reasoning",
+})
+
 # Workspace peers that storage policy keeps outside the repo on purpose. A file resolving here would
 # mean the routing rule had been violated, so absence is the correct state rather than a defect.
 EXTERNAL_PREFIXES: tuple[str, ...] = (
@@ -256,7 +266,7 @@ def check_referenced_paths() -> None:
             tok = raw.split("#", 1)[0].strip().rstrip("/")
             if not tok or tok in IGNORE_EXACT or tok in CONDITIONAL_PATHS or tok.startswith(IGNORE_PREFIXES):
                 continue
-            if tok in EXTERNAL_SLUGS or tok in EXTERNAL_REFS or tok.startswith(EXTERNAL_PREFIXES):
+            if tok in EXTERNAL_SLUGS or tok in EXTERNAL_REFS or tok in NOTATION or tok.startswith(EXTERNAL_PREFIXES):
                 continue
             if not PATHLIKE.match(tok):
                 continue

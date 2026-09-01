@@ -1,6 +1,7 @@
 import * as path from 'path';
 import { registry } from './core/adapters/registry';
 import { claudeCodeAdapter } from './adapters/claude-code';
+import { codexAdapter } from './adapters/openai-codex';
 import * as vscode from 'vscode';
 import { DiscoveryService } from './services/discoveryService';
 import { ParserService } from './services/parserService';
@@ -16,6 +17,9 @@ export function activate(context: vscode.ExtensionContext) {
   // Hermes register here too once they land, and nothing downstream needs to change when they do.
   if (!registry.get(claudeCodeAdapter.id)) {
     registry.register(claudeCodeAdapter);
+  }
+  if (!registry.get(codexAdapter.id)) {
+    registry.register(codexAdapter);
   }
 
   // Initialize services
