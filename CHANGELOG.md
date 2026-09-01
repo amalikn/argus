@@ -26,7 +26,7 @@ Durable project and governance history. Append entries; do not rewrite historica
 
 - [docs/adapters/hermes-source-audit.md](docs/adapters/hermes-source-audit.md): the Milestone 7 audit, against pinned upstream `5a8e8a6b` (2026-09-01) and the installed checkout `68d081f5`
   (2026-05-10).
-- `.archcore/adr/hermes-snapshot-is-primary.adr.md`, superseding `hermes-evidence-source.adr.md`.
+- `.archcore/adr/hermes-snapshot-is-primary.adr.md`, superseding `.archcore/adr/hermes-evidence-source.adr.md`.
 - `check_supersession_chain` in the governance checker: a superseded document must name its replacement and the replacement must name it back.
 
 ### Changed
