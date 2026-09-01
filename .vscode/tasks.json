@@ -1,0 +1,25 @@
+{
+  // Build tasks for the Extension Development Host. Both call `just`, never a bare npm or npx, so the mise-pinned node resolves the same
+  // way it does for every other task in this repo. See the justfile header for why interpreters are pinned by absolute path.
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "argus: build for extension host",
+      "type": "shell",
+      "command": "/opt/homebrew/bin/just",
+      "args": ["edh-build"],
+      "group": "build",
+      "problemMatcher": ["$tsc"],
+      "presentation": { "reveal": "silent", "panel": "shared" }
+    },
+    {
+      "label": "argus: watch",
+      "type": "shell",
+      "command": "/opt/homebrew/bin/just",
+      "args": ["watch"],
+      "isBackground": true,
+      "problemMatcher": ["$tsc-watch"],
+      "presentation": { "reveal": "never", "panel": "dedicated" }
+    }
+  ]
+}

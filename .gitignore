@@ -38,6 +38,11 @@ yarn-error.log*
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
+# Fork addition. The upstream ignore list drops launch.json and tasks.json, which is the right default for a repo whose
+# .vscode holds personal editor state and the wrong one here: these two ARE the interactive gate. Upstream shipped no
+# launch configuration at all, which is why this extension reached Milestone 8 without ever being run.
+!.vscode/launch.json
+!.vscode/tasks.json
 .idea/
 *.swp
 *.swo

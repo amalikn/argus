@@ -33,12 +33,11 @@ discoverable, parseable, watchable and scale-tested. The UI reads provider ident
 
 ## Open items
 
-- [ ] Milestone 8: the Hermes adapter. Primary source is `sessions/session_*.json`, not the JSONL mirror; ids come from the record, never the filename; `tokenUsage`, `contextMetrics` and `cost` are
-  all false.
 - [ ] The generic event renderer is not built. The webview still consumes `SessionDetail`, so a Codex session is parseable but not yet viewable.
-- [ ] Extension never launched in an Extension Development Host. Every gate is static; nothing yet proves it renders a session.
+- [ ] The Argus view has never been seen rendering. As of 20260902 the extension DOES load and activate in a real Extension Development Host — `just edh` or F5, and the host log records the activation
+  with no argus-side error. What is still unverified is the view itself: screen capture was refused for that whole session, and scripted keystrokes into the host window destabilised it. The remaining
+  step is a human one — run `just edh`, click the Argus icon in the activity bar, and confirm sessions list and a Claude session opens.
 - [ ] Codex tiered above-threshold pricing is stored but not applied, so very long turns are costed at the base rate.
-- [ ] The 21 promoted `.archcore/` documents are `status: proposed`. Review and move each to `accepted`, or reject it.
 
 ---
 
@@ -113,7 +112,7 @@ discoverable, parseable, watchable and scale-tested. The UI reads provider ident
 
 ## Next actions
 
-- Run the extension in an Extension Development Host — never done, and every gate so far is static.
+- Confirm by eye that the Argus view renders: `just edh`, then click the Argus icon. The host launches and the extension activates; only the rendering is unconfirmed.
 - Then the generic event renderer, targeting Codex viewability.
 - Consider the generic event renderer now that two real provider shapes exist to design against.
 

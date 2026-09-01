@@ -77,6 +77,29 @@ compile:
 webview:
     {{npm}} run build:webview
 
+# The two recipes below back the interactive check that this fork had never run: upstream shipped no launch configuration, so every
+# quality gate here is static and none of them proves a session renders. `edh-build` is named separately from `compile` because
+# .vscode/tasks.json binds to it as the F5 pre-launch step — changing what F5 builds should be a change here, not in a JSON file
+# nobody reads. `edh` disables other extensions in the host window so a rendering failure cannot be blamed on an unrelated extension,
+# and so a previously installed copy of argus cannot shadow the one under development.
+#
+# --user-data-dir is load-bearing, not tidiness. Without it the `code` CLI hands the arguments to an ALREADY-RUNNING VS Code instance,
+# which cannot host a development extension, so it drops --extensionDevelopmentPath and merely focuses a normal window. The failure is
+# silent: the command exits 0 and a window appears. Pointing at a separate profile forces a second instance, which is the only one that
+# can load the extension from out/. The profile lives in the working cache because it is rebuildable state.
+
+# Build what the Extension Development Host loads: the compiled extension in out/ plus the webview bundle it serves.
+edh-build: compile webview
+
+# Launch the extension in a second VS Code window with other extensions disabled. Same thing F5 does, reachable from a terminal.
+edh: edh-build
+    mkdir -p {{cache}}/edh-user-data
+    /usr/local/bin/code --user-data-dir={{cache}}/edh-user-data --extensionDevelopmentPath={{justfile_directory()}} --disable-extensions --new-window {{justfile_directory()}}
+
+# Incremental TypeScript rebuild. Extension-side only — the webview has its own dev server under `npm run dev:webview`.
+watch:
+    {{npm}} run watch
+
 # Runs vitest. Upstream shipped a test script pointing at a path that never existed; M2.1 replaced it.
 test:
     {{npm}} test

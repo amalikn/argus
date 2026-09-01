@@ -786,9 +786,38 @@ def check_archcore_index_count() -> None:
     elif claimed != actual:
         fail("archcore", f".archcore/README.md claims {claimed} documents; {actual} exist on disk")
 
+# Agent and tool dotfolders that are governance surface. A folder here must be named in AGENTS.md. Folders NOT listed
+# here are ignored entirely - this is a registry of what counts as a tool folder, not an ignore-list for what failed.
+TOOL_DOTFOLDERS: frozenset[str] = frozenset({
+    ".archcore", ".vscode", ".ai-context", ".code-context-notes", ".remember", ".agents", ".serena", ".cursor",
+    ".codex", ".github", ".backlog",
+})
+
+
+def check_agents_names_every_tool_dotfolder() -> None:
+    """AGENTS.md names every agent/tool dotfolder present in the repo.
+
+    A tool folder nobody documented is a folder the next agent deletes as editor residue. Found on 20260902 when
+    .vscode/ was added to carry the Extension Development Host launch configuration: three dotfolders were already
+    present and undocumented, and nothing could have reported that, because every path check here verifies that a
+    referenced path EXISTS and none verifies that an existing surface is referenced.
+
+    Rule: presence on disk is the trigger. Adding a tool folder means naming it in AGENTS.md in the same pass.
+    """
+    text = read("AGENTS.md")
+    if text is None:
+        return
+    body = without_code(text)
+    for child in sorted(p for p in ROOT.iterdir() if p.is_dir() and p.name in TOOL_DOTFOLDERS):
+        counted()
+        if child.name not in body:
+            fail("tool-folders", f"{child.name}/ exists but AGENTS.md does not name it")
+
+
 # --------------------------------------------------------------------------------------------------------------- MAIN
 
 CHECKS = (
+    check_agents_names_every_tool_dotfolder,
     check_archcore_index_count,
     check_architecture_names_every_source_dir,
     check_no_resolved_finding_asserted_open,

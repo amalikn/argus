@@ -1,0 +1,20 @@
+{
+  // Launches this extension in a second VS Code window (the Extension Development Host) with the compiled extension loaded from out/.
+  //
+  // Upstream shipped no launch configuration at all, which is why the extension had never been run interactively — every quality gate in
+  // this fork is static and none of them proves a session renders. This file makes the interactive check a one-key action (F5).
+  //
+  // Other extensions are disabled in the host window so a rendering failure cannot be blamed on an unrelated extension, and so a
+  // previously installed copy of argus itself cannot shadow the one under development.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Argus in Extension Host",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}", "--disable-extensions"],
+      "outFiles": ["${workspaceFolder}/out/**/*.js"],
+      "preLaunchTask": "argus: build for extension host"
+    }
+  ]
+}
