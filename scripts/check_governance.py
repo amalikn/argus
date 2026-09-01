@@ -578,10 +578,59 @@ def check_archcore_frontmatter() -> None:
             fail("archcore", f"{rel} has no `source:` provenance header")
 
 
+
+def check_supersession_chain() -> None:
+    """A superseded document names its replacement, and the replacement names it back.
+
+    Supersession is where a document set rots quietly. A document marked superseded with no pointer leaves the reader
+    with no way to find what replaced it, and a replacement that does not name what it replaced lets both documents sit
+    in the index looking equally current. Either half alone is worse than neither, because it reads as maintained.
+
+    Rule: .archcore/README.md, "How to propose another" and the adr supersession convention.
+    """
+    base = ROOT / ".archcore"
+    if not base.is_dir():
+        return
+
+    front: dict[str, dict[str, str]] = {}
+    for path in sorted(base.rglob("*.md")):
+        if path.name == "README.md":
+            continue
+        text = path.read_text(encoding="utf-8")
+        if not text.startswith("---"):
+            continue
+        head = text.split("---", 2)[1]
+        front[path.name] = dict(
+            (line.split(":", 1)[0].strip(), line.split(":", 1)[1].strip())
+            for line in head.splitlines()
+            if ":" in line
+        )
+
+    for name, fields in front.items():
+        if fields.get("status") == "superseded":
+            counted()
+            successor = fields.get("superseded_by")
+            if not successor:
+                fail("archcore", f".archcore/**/{name} is superseded but names no superseded_by")
+            elif successor not in front:
+                fail("archcore", f".archcore/**/{name} names superseded_by {successor}, which does not exist")
+            elif front[successor].get("supersedes") != name:
+                fail("archcore", f"{successor} does not name {name} in its supersedes field — the chain points one way only")
+
+        if "supersedes" in fields:
+            counted()
+            target = fields["supersedes"]
+            if target not in front:
+                fail("archcore", f".archcore/**/{name} supersedes {target}, which does not exist")
+            elif front[target].get("status") != "superseded":
+                fail("archcore", f"{target} is superseded by {name} but is not marked status: superseded")
+
+
 # --------------------------------------------------------------------------------------------------------------- MAIN
 
 CHECKS = (
     check_archcore_frontmatter,
+    check_supersession_chain,
     check_referenced_paths,
     check_index_links,
     check_count_claims,

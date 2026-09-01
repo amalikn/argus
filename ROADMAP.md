@@ -5,7 +5,7 @@ Milestone sequence, stop gates and scope tiers. The governing detail lives in
 
 ## Current phase
 
-**Milestones 1 to 6 complete.** Stops 1, 2 and 3 all reported green. Milestones 7 and 8 (Hermes) are next.
+**Milestones 1 to 7 complete.** Stops 1, 2 and 3 all reported green. Milestone 8, the Hermes adapter, is next and its shape is settled by the Milestone 7 audit.
 
 ## Stop gates
 
@@ -37,7 +37,7 @@ Three halts are mandatory. At each, stop and report; do not proceed without an e
 - [x] **M4 — UI provider-neutralization.** Largest single chunk, roughly 4700 lines of React.
 - [x] **M5 — Codex discovery and parser.** Read-only historical parsing first.
 - [x] **M6 — Codex live watch and scale hardening.**
-- [ ] **M7 — Hermes source audit.** Starts from `~/.hermes/sessions/*.jsonl`; pin the upstream commit audited.
+- [x] **M7 — Hermes source audit.** Complete. Found a second, larger `session_*.json` store the accepted ADR had missed; superseding ADR written. No token usage exists in either format.
 - [ ] **M8 — Hermes adapter.**
 - [ ] **M9 — Unified analysis.** De-scopable. Six rules to port, enumerated in finding F9.
 - [ ] **M10 — Search, export, privacy.** De-scopable. Smaller than planned: there is no telemetry to strip, only a guard to add.

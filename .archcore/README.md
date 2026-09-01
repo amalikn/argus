@@ -36,7 +36,8 @@ one of them disagrees with `AGENTS.md`, a narrative document or `SCRATCHPAD.md`,
 
 | Document                                  | Governs                                                                                                      |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| [0001 Hermes evidence source](adr/hermes-evidence-source.adr.md)               | Hermes reads `~/.hermes/sessions/*.jsonl`, not the logs. Reverses the original plan premise                  |
+| [0001 Hermes evidence source](adr/hermes-evidence-source.adr.md)               | SUPERSEDED. Hermes reads `~/.hermes/sessions/*.jsonl`, not the logs. Reverses the original plan premise      |
+| [Hermes snapshot is primary](adr/hermes-snapshot-is-primary.adr.md)                | `sessions/session_*.json` is the primary store; the JSONL mirror is secondary. Supersedes the entry above    |
 | [0002 Reasoning parse-then-gate](adr/reasoning-parse-then-gate.adr.md)            | Reasoning is parsed, masked in UI, placeholdered in default exports. Replaces an unimplementable prohibition |
 | [0003 Vendored pricing](adr/vendored-pricing.adr.md)                     | Pricing comes from a vendored LiteLLM dataset; unknown models yield no cost                                  |
 | [0004 Stop gates and scope tiers](adr/stop-gates-and-scope-tiers.adr.md)           | Three mandatory halts; M1-M6 mandatory, M7-M8 target, M9-M11 de-scopable                                     |

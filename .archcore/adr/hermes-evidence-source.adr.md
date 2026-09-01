@@ -1,15 +1,19 @@
 ---
 title: Hermes adapter reads the structured session store, not the logs
 type: adr
-status: accepted
+status: superseded
 date: 20260901
 accepted: 20260901
 source: SCRATCHPAD.md decisions, verified against the live filesystem 20260901
 tags: [adapters, evidence]
+superseded_by: hermes-snapshot-is-primary.adr.md
 promoted_by: skill-ai-it promote
 ---
 
 # Hermes adapter reads the structured session store, not the logs
+
+> **Superseded on 20260901 by [hermes-snapshot-is-primary.adr.md](hermes-snapshot-is-primary.adr.md).** The conclusion below is correct but incomplete: `sessions/` holds a second,
+> larger `session_*.json` store that this document did not find. Retained because the reasoning that displaced the original `logs/` premise still stands.
 
 ## Context
 

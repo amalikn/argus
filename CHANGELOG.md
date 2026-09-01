@@ -4,6 +4,7 @@ Durable project and governance history. Append entries; do not rewrite historica
 
 ## Contents
 
+- [20260901_2245 — Milestone 7](#20260901_2245-milestone-7)
 - [20260901_2200 — Milestone 6, Stop 3](#20260901_2200-milestone-6-stop-3)
 - [20260901_2130 — Milestone 5](#20260901_2130-milestone-5)
 - [20260901_2045 — Milestone 4](#20260901_2045-milestone-4)
@@ -18,6 +19,36 @@ Durable project and governance history. Append entries; do not rewrite historica
 - [20260901_1708](#20260901_1708)
 
 ---
+
+## 20260901_2245 — Milestone 7
+
+### Added
+
+- [docs/adapters/hermes-source-audit.md](docs/adapters/hermes-source-audit.md): the Milestone 7 audit, against pinned upstream `5a8e8a6b` (2026-09-01) and the installed checkout `68d081f5`
+  (2026-05-10).
+- `.archcore/adr/hermes-snapshot-is-primary.adr.md`, superseding `hermes-evidence-source.adr.md`.
+- `check_supersession_chain` in the governance checker: a superseded document must name its replacement and the replacement must name it back.
+
+### Changed
+
+- `.archcore/adr/hermes-evidence-source.adr.md` marked `status: superseded` with a `superseded_by` pointer and a banner. Not edited in place beyond that, per the acceptance rules.
+
+### Notes — audit findings
+
+- **The accepted ADR was incomplete.** `~/.hermes/sessions/` holds two formats from two writers: 60 `*.jsonl` (18.2 MB, 4,601 rows) and 243 `session_*.json` (119.9 MB, 33,668 messages). All 60 JSONL
+  stems appear as `session_id` values in the JSON store, so the snapshot store is a strict superset. Primary source is now the JSON snapshot.
+- **The filename is not the id.** 76 of 243 filenames disagree with the `session_id` inside the file. Keying on the filename would have mis-identified nearly a third of the store.
+- **No token usage exists anywhere in either format.** Zero hits across every usage-shaped key. So `tokenUsage`, `contextMetrics` and `cost` are all false for Hermes, not because the model is
+  unpriceable — `deepseek-v4-flash` is in the vendored table — but because there is nothing to multiply.
+- **Shell exit codes are recorded** (684 occurrences), so Hermes `shell.command` status is `exact`, like Codex and unlike Claude.
+- **Five malformed lines are a third failure mode**: unescaped newlines inside a `browser_navigate` result split one logical record across physical lines. Claude had zero undecodable lines in
+  1,018,178; this hazard would never have been found by generalizing.
+- **The databases add nothing.** `state.db` is 501 MB of live gateway runtime state with nearly every table empty and is actively written; `response_store.db` is empty; `verification_evidence.db` has
+  46 state rows and zero events. The session files are the only meaningful source, which removes the SQLite work from Milestone 8.
+- The installed build is four months behind the pinned upstream HEAD, and the local evidence was written by that older build. Recorded as the audit's principal caveat.
+- The new supersession check caught a real defect on its first run: the `superseded_by` pointer had silently failed to land because the edit anchored on a tags value that canonicalization had already
+  rewritten. Fixed the document, not the check.
+- Checks: 179 then 181.
 
 ## 20260901_2200 — Milestone 6, Stop 3
 
