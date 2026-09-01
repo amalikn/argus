@@ -232,7 +232,9 @@ class DuplicateReadRule implements AnalysisRule {
 
       const entry = fileReads.get(filePath)!;
       entry.indices.push(step.index);
-      entry.cost += step.cost;
+      // A step whose model is unknown to the pricing table has no attributable cost, so it adds nothing
+      // to the duplicate-read total. It is unattributable, not free.
+      entry.cost += step.cost ?? 0;
     }
 
     const findings: Finding[] = [];
@@ -290,7 +292,7 @@ class UnusedReadRule implements AnalysisRule {
 
       if (!hasFollowup && nextSteps.some(s => s.type === 'tool_call')) {
         unusedReads.push(readStep.index);
-        wastedCost += readStep.cost;
+        wastedCost += readStep.cost ?? 0;
       }
     }
 
@@ -327,14 +329,14 @@ class RetryLoopRule implements AnalysisRule {
       // Count consecutive failures of the same tool
       let failCount = 1;
       const failSteps = [step1.index];
-      let totalCost = step1.cost;
+      let totalCost = step1.cost ?? 0;
 
       for (let j = i + 1; j < steps.length && j < i + 10; j++) {
         const stepJ = steps[j];
         if (stepJ.type === 'tool_call' && stepJ.toolName === step1.toolName && stepJ.toolSuccess === false) {
           failCount++;
           failSteps.push(stepJ.index);
-          totalCost += stepJ.cost;
+          totalCost += stepJ.cost ?? 0;
         }
       }
 
@@ -367,7 +369,7 @@ class FailedToolRule implements AnalysisRule {
       return [];
     }
 
-    const wastedCost = failedSteps.reduce((sum, s) => sum + s.cost, 0);
+    const wastedCost = failedSteps.reduce((sum, s) => sum + (s.cost ?? 0), 0);
 
     return [
       {
@@ -535,7 +537,7 @@ class CompactionDetectedRule implements AnalysisRule {
           const filePath = step.toolInput?.file_path;
           if (filePath && preFiles.has(filePath)) {
             rereadSteps.push(step.index);
-            rereadCost += step.cost;
+            rereadCost += step.cost ?? 0;
           }
         }
       }

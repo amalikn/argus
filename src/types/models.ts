@@ -79,7 +79,8 @@ export interface Step {
   toolResult?: string;
   toolSuccess?: boolean;
   usage?: Usage;
-  cost: number;
+  /** undefined when the model is unknown or the source reported no usage. Zero means the source said zero. */
+  cost?: number;
   agentId?: string;
   globalIndex?: number;
 }
@@ -202,57 +203,11 @@ export interface StepDependency {
 
 export interface StepCost {
   stepIndex: number;
-  cost: number;
+  /** undefined when no step in the session could be costed. */
+  cost?: number;
 }
 
-export interface ModelPricing {
-  inputPerMillion: number;
-  outputPerMillion: number;
-  cacheReadRatio: number;
-  cacheCreateRatio: number;
-}
-
-export const MODEL_PRICES: Record<string, ModelPricing> = {
-  'claude-opus-4-6': {
-    inputPerMillion: 15.0,
-    outputPerMillion: 75.0,
-    cacheReadRatio: 0.10,
-    cacheCreateRatio: 0.25,
-  },
-  'claude-sonnet-4-5-20250929': {
-    inputPerMillion: 3.0,
-    outputPerMillion: 15.0,
-    cacheReadRatio: 0.10,
-    cacheCreateRatio: 0.25,
-  },
-  'claude-sonnet-4-6': {
-    inputPerMillion: 3.0,
-    outputPerMillion: 15.0,
-    cacheReadRatio: 0.10,
-    cacheCreateRatio: 0.25,
-  },
-  'claude-haiku-4-5-20251001': {
-    inputPerMillion: 0.80,
-    outputPerMillion: 4.0,
-    cacheReadRatio: 0.10,
-    cacheCreateRatio: 0.25,
-  },
-};
-
-export function getModelPricing(model: string): ModelPricing {
-  return MODEL_PRICES[model] || MODEL_PRICES['claude-sonnet-4-5-20250929'];
-}
-
-export function calculateCost(usage: Usage | undefined, model: string): number {
-  if (!usage) {
-    return 0;
-  }
-
-  const pricing = getModelPricing(model);
-  const inputCost = (usage.input_tokens * pricing.inputPerMillion) / 1_000_000;
-  const outputCost = (usage.output_tokens * pricing.outputPerMillion) / 1_000_000;
-  const cacheReadCost = (usage.cache_read_input_tokens * pricing.inputPerMillion * pricing.cacheReadRatio) / 1_000_000;
-  const cacheCreateCost = (usage.cache_creation_input_tokens * pricing.inputPerMillion * pricing.cacheCreateRatio) / 1_000_000;
-
-  return inputCost + outputCost + cacheReadCost + cacheCreateCost;
-}
+// Pricing lived here as a hardcoded Claude-only table, duplicated by a second copy in parserService.ts.
+// Both disagreed with published rates and both fell back to Sonnet pricing for unrecognized models, so a
+// non-Anthropic session would have been costed at Anthropic rates. Cost now resolves through
+// src/core/pricing/pricingProvider.ts, which returns undefined rather than guessing. Finding F5.

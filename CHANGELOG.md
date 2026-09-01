@@ -4,6 +4,7 @@ Durable project and governance history. Append entries; do not rewrite historica
 
 ## Contents
 
+- [20260901_1935 — Milestone 2.4](#20260901_1935-milestone-24)
 - [20260901_1915 — Milestone 2.1 to 2.3](#20260901_1915-milestone-21-to-23)
 - [20260901_1845](#20260901_1845)
 - [20260901_1830](#20260901_1830)
@@ -12,6 +13,30 @@ Durable project and governance history. Append entries; do not rewrite historica
 - [20260901_1708](#20260901_1708)
 
 ---
+
+## 20260901_1935 — Milestone 2.4
+
+### Added
+
+- `src/core/pricing/pricingProvider.ts` and `tests/pricing.test.ts`: one pricing resolution path for every provider, reading the vendored table. An unknown model returns `undefined` rather than
+  another model rates.
+
+### Changed
+
+- `src/types/models.ts`: the hardcoded `MODEL_PRICES` table, `getModelPricing` and `calculateCost` deleted. `Step.cost` and `SessionDetail.cost` are now optional, so unknown is representable.
+- `src/services/parserService.ts`: the second, private, disagreeing copy of `calculateCost` deleted; cost delegates to the provider, and an uncostable step leaves the session total unchanged instead
+  of adding a guess.
+- `src/services/analyzerService.ts`: six cost accumulation sites reconciled with optional cost. A step with no attributable cost contributes nothing to a waste total, which is not the same claim as it
+  being free.
+- 11 parity snapshots updated deliberately. Only `totalCost` moved; step counts, tool sequences and findings are byte-identical.
+
+### Notes
+
+- The snapshot movement was verified by hand before acceptance, not accepted because it was expected. The token-cost fixture recomputes to 0.12617925 against a recorded 0.04546425, and the
+  hand-computed figure matches the new snapshot exactly.
+- Root cause of the increase: upstream charged cache creation at 0.25 times the input rate where the published Anthropic rate is 1.25 times input, understating cache writes fivefold. This is a second,
+  independent F5 defect, pointing the opposite way to the `claude-opus-4-6` overstatement. Recorded in the audit.
+- Tests: 54 passing. Checks: 166. All six baseline gates pass.
 
 ## 20260901_1915 — Milestone 2.1 to 2.3
 

@@ -129,6 +129,10 @@ Checked against the LiteLLM dataset on 2026-09-01:
 Both implementations also hardcode cache ratios of 0.1 for reads and 0.25 for writes rather than using published per-token cache prices, and both ignore the tiered above-200k pricing that long
 sessions routinely cross.
 
+**Measured 20260901, after the PricingProvider replaced them:** the 0.25 cache-write ratio understates the published Anthropic rate of 1.25 times input by a factor of five. On the token-cost fixture,
+a session with 13,221 cache-creation tokens was costed at 0.045 against a hand-verified 0.126. Cache-heavy sessions — which is most long agent sessions — were understated roughly threefold. The
+overstatement on `claude-opus-4-6` and this understatement on cache writes are independent defects that happened to point in opposite directions.
+
 Worse for a provider-neutral fork: both fall back to Sonnet pricing for any unrecognized model. A Codex or Hermes session would be silently costed at Anthropic rates. That directly violates the plan
 section 5 rule that a missing metric must be `undefined` rather than synthesized.
 

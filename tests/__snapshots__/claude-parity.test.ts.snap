@@ -17,7 +17,7 @@ exports[`Claude pipeline parity > normalizes 01-simple-prompt-response.jsonl ide
   ],
   "toolSequence": [],
   "toolsUsed": {},
-  "totalCost": 0.0303396,
+  "totalCost": 0.09993960000000002,
   "usage": undefined,
 }
 `;
@@ -44,7 +44,7 @@ exports[`Claude pipeline parity > normalizes 02-bash-success.jsonl identically t
   "toolsUsed": {
     "Bash": 1,
   },
-  "totalCost": 0.03603555,
+  "totalCost": 0.11597655,
   "usage": undefined,
 }
 `;
@@ -97,7 +97,7 @@ exports[`Claude pipeline parity > normalizes 03-bash-failure.jsonl identically t
     "ToolSearch": 1,
     "mcp__codex-bridge__consult_codex": 3,
   },
-  "totalCost": 0.17288189999999998,
+  "totalCost": 0.3198039000000001,
   "usage": undefined,
 }
 `;
@@ -152,7 +152,7 @@ exports[`Claude pipeline parity > normalizes 04-read-write-edit.jsonl identicall
     "Read": 2,
     "Skill": 1,
   },
-  "totalCost": 0.24036689999999997,
+  "totalCost": 0.5100369,
   "usage": undefined,
 }
 `;
@@ -231,7 +231,7 @@ exports[`Claude pipeline parity > normalizes 05-multi-tool.jsonl identically to 
     "mcp__plugin_context-mode_context-mode__ctx_fetch_and_index": 5,
     "mcp__plugin_context-mode_context-mode__ctx_search": 2,
   },
-  "totalCost": 0.8502122999999999,
+  "totalCost": 1.9404602999999998,
   "usage": undefined,
 }
 `;
@@ -310,7 +310,7 @@ exports[`Claude pipeline parity > normalizes 06-subagent/session.jsonl identical
     "mcp__memory-keeper__context_session_start": 1,
     "mcp__memory-keeper__context_set_project_dir": 1,
   },
-  "totalCost": 0.25327515,
+  "totalCost": 0.42359415,
   "usage": undefined,
 }
 `;
@@ -366,7 +366,7 @@ exports[`Claude pipeline parity > normalizes 07-retry-loop.jsonl identically to 
     "Read": 2,
     "Write": 1,
   },
-  "totalCost": 0.95934255,
+  "totalCost": 1.58127555,
   "usage": undefined,
 }
 `;
@@ -403,7 +403,7 @@ exports[`Claude pipeline parity > normalizes 08-token-cost.jsonl identically to 
     "Glob": 1,
     "Grep": 1,
   },
-  "totalCost": 0.04546425,
+  "totalCost": 0.12617925,
   "usage": undefined,
 }
 `;
@@ -750,7 +750,7 @@ exports[`Claude pipeline parity > normalizes 09-compaction.jsonl identically to 
     "mcp__my-github-mcp__git_submodule_add": 1,
     "mcp__my-github-mcp__repo_bootstrap_and_publish": 1,
   },
-  "totalCost": 6.010810050000004,
+  "totalCost": 7.297993049999996,
   "usage": undefined,
 }
 `;
@@ -851,7 +851,7 @@ exports[`Claude pipeline parity > normalizes 13-unicode-path-or-content.jsonl id
     "mcp__plugin_context-mode_context-mode__execute": 1,
     "mcp__plugin_context-mode_context-mode__execute_file": 1,
   },
-  "totalCost": 0.1298748,
+  "totalCost": 0.3249048000000001,
   "usage": undefined,
 }
 `;
@@ -926,7 +926,7 @@ exports[`Claude pipeline parity > normalizes 15-cancelled-interrupted.jsonl iden
     "ToolSearch": 1,
     "mcp__codex-bridge__consult_codex": 3,
   },
-  "totalCost": 0.17288189999999998,
+  "totalCost": 0.3198039000000001,
   "usage": undefined,
 }
 `;

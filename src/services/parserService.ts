@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
+import { pricing } from '../core/pricing/pricingProvider';
 import { RawEvent } from '../types/parser';
 import { HistoryEntry, SessionDetail, Step, SubagentInfo } from '../types/models';
 import { getClaudeConfigDir } from '../utils/claudePaths';
@@ -208,8 +209,13 @@ export class ParserService {
       // Process assistant messages
       if (event.type === 'assistant' && event.message) {
         const usage = event.message.usage;
-        const cost = usage ? this.calculateCost(usage, model) : 0;
-        totalCost += cost;
+        // undefined here is meaningful: the model is unknown to the pricing table, or the source reported
+        // no usage. Only a real number contributes to the session total, so an unknown model leaves the
+        // total unchanged rather than silently adding a guess.
+        const cost = pricing.calculateCost(usage, model);
+        if (cost !== undefined) {
+          totalCost += cost;
+        }
 
         // Ensure content is an array
         const content = Array.isArray(event.message.content) ? event.message.content : [];
@@ -486,21 +492,5 @@ export class ParserService {
     return text.substring(0, maxLen) + '...';
   }
 
-  private calculateCost(usage: any, model: string): number {
-    // Import from models.ts would be better, but for simplicity:
-    const pricing: any = {
-      'claude-opus-4-6': { in: 15, out: 75 },
-      'claude-sonnet-4-5-20250929': { in: 3, out: 15 },
-      'claude-sonnet-4-6': { in: 3, out: 15 },
-      'claude-haiku-4-5-20251001': { in: 0.8, out: 4 },
-    };
 
-    const p = pricing[model] || pricing['claude-sonnet-4-5-20250929'];
-    const inputCost = (usage.input_tokens * p.in) / 1_000_000;
-    const outputCost = (usage.output_tokens * p.out) / 1_000_000;
-    const cacheReadCost = (usage.cache_read_input_tokens * p.in * 0.1) / 1_000_000;
-    const cacheCreateCost = (usage.cache_creation_input_tokens * p.in * 0.25) / 1_000_000;
-
-    return inputCost + outputCost + cacheReadCost + cacheCreateCost;
-  }
 }
