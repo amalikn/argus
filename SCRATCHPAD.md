@@ -7,9 +7,21 @@ explicitly marked KEEP.
 
 <!-- KEEP: populated 20260901_1800 from claude-mem plus this session. memory-keeper and mcp-project-context returned no argus entries. -->
 
+## Contents
+
+- [Current state](#current-state)
+- [Open items](#open-items)
+- [Key anchors](#key-anchors)
+- [Recent decisions](#recent-decisions)
+- [Session history (summaries — full detail in claude-mem)](#session-history-summaries-full-detail-in-claude-mem)
+- [Next actions](#next-actions)
+- [Memory pointers (navigation only — content is above)](#memory-pointers-navigation-only-content-is-above)
+
+---
+
 ## Current state
 
-**Phase:** Milestones 1 to 6 complete and pushed. Stops 1, 2 and 3 all reported green. Hermes (M7 and M8) is next.
+**Phase:** Milestones 1 to 7 complete and pushed. Stops 1, 2 and 3 all reported green. Milestone 8, the Hermes adapter, is next; its shape is settled by the Milestone 7 audit.
 
 The fork lives at `amalikn/argus` on branch `feat/multi-agent-observability`, with the unmodified upstream preserved at tag `baseline-upstream-argus`. All six quality gates now pass, where the
 baseline had one that could not run at all. Claude runs behind the adapter contract with its parity snapshots intact, cost resolves through one provider-neutral pricing table, and Codex is
@@ -19,7 +31,8 @@ discoverable, parseable, watchable and scale-tested. The UI reads provider ident
 
 ## Open items
 
-- [ ] Milestones 7 and 8: Hermes. Start from `~/.hermes/sessions/*.jsonl`, and pin the upstream commit audited.
+- [ ] Milestone 8: the Hermes adapter. Primary source is `sessions/session_*.json`, not the JSONL mirror; ids come from the record, never the filename; `tokenUsage`, `contextMetrics` and `cost` are
+  all false.
 - [ ] The generic event renderer is not built. The webview still consumes `SessionDetail`, so a Codex session is parseable but not yet viewable.
 - [ ] Extension never launched in an Extension Development Host. Every gate is static; nothing yet proves it renders a session.
 - [ ] Codex tiered above-threshold pricing is stored but not applied, so very long turns are costed at the base rate.
@@ -61,6 +74,12 @@ discoverable, parseable, watchable and scale-tested. The UI reads provider ident
 
 ## Session history (summaries — full detail in claude-mem)
 
+### 20260901 — Milestone 7, Hermes audit
+- Audited the live store against pinned upstream `5a8e8a6b`; found a second, larger `session_*.json` store the accepted ADR had missed, and superseded that ADR.
+- No token usage exists in either Hermes format, so `tokenUsage`, `contextMetrics` and `cost` are all false. Shell exit codes ARE recorded, so status is `exact`.
+- The four SQLite stores add nothing; Milestone 8 scope shrank accordingly.
+- Evidence basis: docs/adapters/hermes-source-audit.md, CHANGELOG 20260901_2245.
+
 ### 20260901 — Milestones 2 to 6
 - Test harness (vitest), 16 Claude and 9 Codex sanitized fixtures, and the Claude parity snapshots that gate Stop 2.
 - Deleted both hardcoded cost tables for one PricingProvider; found upstream understated cache writes fivefold.
@@ -79,13 +98,16 @@ discoverable, parseable, watchable and scale-tested. The UI reads provider ident
 
 ## Next actions
 
-- Milestone 7: audit the Hermes session store against a pinned upstream commit.
+- Milestone 8: build the Hermes adapter per the audit's decision table.
 - Consider the generic event renderer now that two real provider shapes exist to design against.
 
 ---
 
 ## Memory pointers (navigation only — content is above)
 
-- memory-keeper: no argus entries as at 20260901
-- mcp-project-context: no argus project; `tools_stuff` project id `21603336-2da7-48cc-99be-7dc564fd7ceb`
-- claude-mem: observations from 20260901 covering the fork, the baseline commit, the governance scaffold and the submodule registration
+- memory-keeper channel `argus`, keys: `argus.plan.four-corrections`, `argus.audit.findings`, `argus.pricing.f5-measured`, `argus.core.normalized-model-spec`, `argus.adapters.mapping-tables`,
+  `argus.codex.two-format-generations`, `argus.fixtures.builder-defects`, `argus.fixtures.corpus-inventory`, `argus.tests.inventory-and-gates`, `argus.governance.archcore-and-checks`,
+  `argus.env.tooling-and-routing`, `argus.gotchas.platform-and-tooling`, `argus.milestones.2-6-complete`, `argus.next.m7-hermes`
+- memory-keeper checkpoint: `slurp-20260901-argus-m1-m6` (id d1836c0c, 202 items)
+- mcp-project-context project `argus` id `5a26968b-4e58-4b4f-ba64-a0526a7a4aed`; checkpoint `slurp-20260901-argus-m1-m6` (id f0b9ae18)
+- claude-mem: observations from 20260901 across the whole session
