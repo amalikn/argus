@@ -1,8 +1,9 @@
 ---
 title: Upstream is fetch-only
 type: rule
-status: proposed
+status: accepted
 date: 20260901
+accepted: 20260901
 source: AGENTS.md fork discipline
 tags: [fork, safety]
 promoted_by: skill-ai-it promote

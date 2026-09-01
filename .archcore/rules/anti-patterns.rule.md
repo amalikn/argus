@@ -1,8 +1,9 @@
 ---
 title: Named anti-patterns
 type: rule
-status: proposed
+status: accepted
 date: 20260901
+accepted: 20260901
 source: CONVENTIONS.md anti-patterns table
 tags: [governance]
 promoted_by: skill-ai-it promote

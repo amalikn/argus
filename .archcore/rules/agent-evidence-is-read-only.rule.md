@@ -1,8 +1,9 @@
 ---
 title: Agent evidence stores are read-only
 type: rule
-status: proposed
+status: accepted
 date: 20260901
+accepted: 20260901
 source: AGENTS.md agent evidence is read-only
 tags: [adapters, evidence, safety]
 promoted_by: skill-ai-it promote

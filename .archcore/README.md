@@ -12,7 +12,7 @@ tags: [governance, index]
 Structured, versioned project truth for the Argus multi-agent observability fork. Highest authority in the source-priority order defined by [AI_NAVIGATION.md](../AI_NAVIGATION.md): where a document
 here disagrees with `AGENTS.md`, a narrative doc or `SCRATCHPAD.md`, this wins unless it is marked draft.
 
-Every document below carries a `source:` header naming where it was promoted from, and `status: proposed` until reviewed and accepted.
+Every document below carries a `source:` header naming where it was promoted from, and an `accepted:` date recording when it took effect.
 
 ## Contents
 
@@ -27,8 +27,10 @@ Every document below carries a `source:` header naming where it was promoted fro
 
 ## Status of the set
 
-Promoted 20260901 by `skill-ai-it promote` from `ARCHCORE_PROMOTION_CANDIDATES.md`, which was deleted in the same pass because a queue that outlives its proposals becomes a stale second index. All
-twenty-one documents are `status: proposed`. Move one to `accepted` by editing its front matter after review.
+Promoted 20260901 by `skill-ai-it promote` from `ARCHCORE_PROMOTION_CANDIDATES.md`, which was deleted in the same pass because a queue that outlives its proposals becomes a stale second index.
+
+All twenty-one documents were reviewed and moved to `status: accepted` on 20260901, and each carries an `accepted:` date beside its `date:`. They now sit at the top of the source-priority order: where
+one of them disagrees with `AGENTS.md`, a narrative document or `SCRATCHPAD.md`, the Archcore document wins. Superseding one means writing a replacement that names it, not editing it in place.
 
 ## adr — architecture decisions
 

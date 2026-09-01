@@ -1,8 +1,9 @@
 ---
 title: Vendored pricing table contract
 type: spec
-status: proposed
+status: accepted
 date: 20260901
+accepted: 20260901
 source: current-state-audit.md pricing section; scripts/refresh-pricing.mjs
 tags: [contract, cost]
 promoted_by: skill-ai-it promote

@@ -1,8 +1,9 @@
 ---
 title: Running and recording the baseline gates
 type: guide
-status: proposed
+status: accepted
 date: 20260901
+accepted: 20260901
 source: scripts/README.md; scripts/baseline-gates.sh
 tags: [process, tooling]
 promoted_by: skill-ai-it promote

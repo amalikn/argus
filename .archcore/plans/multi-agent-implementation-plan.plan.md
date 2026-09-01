@@ -1,8 +1,9 @@
 ---
 title: Multi-agent observability implementation plan
 type: plan
-status: proposed
+status: accepted
 date: 20260901
+accepted: 20260901
 source: docs/argus-multi-agent-implementation-plan-20260901_1708.md
 tags: [plan]
 promoted_by: skill-ai-it promote

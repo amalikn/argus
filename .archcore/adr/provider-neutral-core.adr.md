@@ -1,8 +1,9 @@
 ---
 title: Provider-specific records never reach the analyzer or the UI
 type: adr
-status: proposed
+status: accepted
 date: 20260901
+accepted: 20260901
 source: AGENTS.md provider adapter boundaries; ARCHITECTURE.md
 tags: [adapters, architecture, boundaries]
 promoted_by: skill-ai-it promote

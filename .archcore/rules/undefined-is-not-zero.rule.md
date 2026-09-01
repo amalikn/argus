@@ -1,8 +1,9 @@
 ---
 title: A missing metric is undefined, never zero
 type: rule
-status: proposed
+status: accepted
 date: 20260901
+accepted: 20260901
 source: AGENTS.md provider adapter boundaries; finding F5
 tags: [cost, safety]
 promoted_by: skill-ai-it promote

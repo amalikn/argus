@@ -1,8 +1,9 @@
 ---
 title: When a governance check fails, fix the project
 type: rule
-status: proposed
+status: accepted
 date: 20260901
+accepted: 20260901
 source: AGENTS.md governance-checks managed block
 tags: [governance]
 promoted_by: skill-ai-it promote

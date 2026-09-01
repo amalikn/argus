@@ -1,8 +1,9 @@
 ---
 title: Generated context artifacts are excluded locally, not via .gitignore
 type: adr
-status: proposed
+status: accepted
 date: 20260901
+accepted: 20260901
 source: ARCHITECTURE.md key decisions; CHANGELOG.md 20260901_1745
 tags: [fork, tooling]
 promoted_by: skill-ai-it promote

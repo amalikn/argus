@@ -1,8 +1,9 @@
 ---
 title: Milestone 2 sequence, reordered by finding F1
 type: plan
-status: proposed
+status: accepted
 date: 20260901
+accepted: 20260901
 source: ROADMAP.md; current-state-audit.md findings F1 and fixture inventory
 tags: [plan, process]
 promoted_by: skill-ai-it promote

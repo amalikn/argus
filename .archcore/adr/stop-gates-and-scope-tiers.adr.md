@@ -1,8 +1,9 @@
 ---
 title: Milestones halt at three stop gates, and late milestones are de-scopable
 type: adr
-status: proposed
+status: accepted
 date: 20260901
+accepted: 20260901
 source: SCRATCHPAD.md decisions; ROADMAP.md
 tags: [process]
 promoted_by: skill-ai-it promote

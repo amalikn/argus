@@ -2,6 +2,24 @@
 
 Durable project and governance history. Append entries; do not rewrite historical ones.
 
+## 20260901_1845
+
+### Changed
+
+- All 21 Archcore documents moved from `status: proposed` to `status: accepted`, each gaining an `accepted: 20260901` field beside its `date:`.
+- `.archcore/README.md`: status-of-the-set section rewritten to record the acceptance and what it means — the set now outranks `AGENTS.md`, the narrative documents and `SCRATCHPAD.md` in the
+  source-priority order, and superseding a document means writing a replacement that names it rather than editing it in place.
+
+### Added
+
+- `check_archcore_frontmatter` in `scripts/check_governance.py`: every Archcore document must declare a lifecycle state from a closed set, carry a `source:` provenance header, and record an
+  `accepted:` date when accepted.
+
+### Notes
+
+- Checks rose from 136 to 157. The new check was proven able to fail by stripping an `accepted:` date and watching it go red before restoring it.
+- The accepted set carries real authority now. An agent reading a conflict between `AGENTS.md` and an Archcore document must follow the Archcore document.
+
 ## 20260901_1830
 
 ### Added

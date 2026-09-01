@@ -1,8 +1,9 @@
 ---
 title: Normalized model layering contract
 type: spec
-status: proposed
+status: accepted
 date: 20260901
+accepted: 20260901
 source: ARCHITECTURE.md target layering; plan sections 4, 5, 7
 tags: [adapters, architecture, contract]
 promoted_by: skill-ai-it promote

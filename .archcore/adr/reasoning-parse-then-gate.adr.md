@@ -1,8 +1,9 @@
 ---
 title: Reasoning is parsed, then gated — not prohibited
 type: adr
-status: proposed
+status: accepted
 date: 20260901
+accepted: 20260901
 source: SCRATCHPAD.md decisions; plan section 20.1
 tags: [privacy]
 promoted_by: skill-ai-it promote

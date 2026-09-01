@@ -1,8 +1,9 @@
 ---
 title: Confidence markers on normalized events
 type: spec
-status: proposed
+status: accepted
 date: 20260901
+accepted: 20260901
 source: ARCHITECTURE.md key decisions; adr 0001
 tags: [adapters, contract, evidence]
 promoted_by: skill-ai-it promote

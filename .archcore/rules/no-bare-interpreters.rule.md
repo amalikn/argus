@@ -1,8 +1,9 @@
 ---
 title: No task recipe calls a bare interpreter
 type: rule
-status: proposed
+status: accepted
 date: 20260901
+accepted: 20260901
 source: AGENTS.md runtime and storage routing; check_governance.py check_interpreter_pinning
 tags: [tooling]
 promoted_by: skill-ai-it promote

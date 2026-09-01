@@ -1,8 +1,9 @@
 ---
 title: Refreshing and drift-checking the pricing table
 type: guide
-status: proposed
+status: accepted
 date: 20260901
+accepted: 20260901
 source: current-state-audit.md pricing section
 tags: [cost, process, tooling]
 promoted_by: skill-ai-it promote

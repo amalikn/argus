@@ -1,8 +1,9 @@
 ---
 title: Normalized types are discriminated unions
 type: spec
-status: proposed
+status: accepted
 date: 20260901
+accepted: 20260901
 source: CONVENTIONS.md TypeScript section; plan section 5
 tags: [contract]
 promoted_by: skill-ai-it promote

@@ -1,8 +1,9 @@
 ---
 title: Hermes adapter reads the structured session store, not the logs
 type: adr
-status: proposed
+status: accepted
 date: 20260901
+accepted: 20260901
 source: SCRATCHPAD.md decisions, verified against the live filesystem 20260901
 tags: [adapters, evidence]
 promoted_by: skill-ai-it promote

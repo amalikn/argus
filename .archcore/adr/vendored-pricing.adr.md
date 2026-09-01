@@ -1,8 +1,9 @@
 ---
 title: Model pricing is vendored from LiteLLM and never fetched at runtime
 type: adr
-status: proposed
+status: accepted
 date: 20260901
+accepted: 20260901
 source: SCRATCHPAD.md decisions; current-state-audit.md finding F5
 tags: [cost, privacy]
 promoted_by: skill-ai-it promote

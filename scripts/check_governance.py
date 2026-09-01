@@ -529,9 +529,49 @@ def check_evidence_provenance() -> None:
                  f"{EVIDENCE_DIR}/{item.name} defers its provenance to {corrector}, which does not exist")
 
 
+
+def check_archcore_frontmatter() -> None:
+    """Every Archcore document declares a valid lifecycle state, and an accepted one records when.
+
+    Archcore documents sit at the top of the source-priority order in AI_NAVIGATION.md, so a document whose state cannot
+    be read is a document whose authority cannot be judged. An accepted document with no acceptance date is the specific
+    failure this catches: it reads as authoritative while nothing records when it became so, which is exactly what a
+    later reader needs in order to tell it apart from a draft someone forgot to finish.
+
+    Rule: .archcore/README.md, "How to propose another" and the status-of-the-set section.
+    """
+    states = {"proposed", "accepted", "superseded", "rejected"}
+    base = ROOT / ".archcore"
+    if not base.is_dir():
+        return
+    for path in sorted(base.rglob("*.md")):
+        if path.name == "README.md":
+            continue
+        rel = path.relative_to(ROOT).as_posix()
+        text = path.read_text(encoding="utf-8")
+        counted()
+        if not text.startswith("---"):
+            fail("archcore", f"{rel} has no YAML frontmatter")
+            continue
+        head = text.split("---", 2)[1]
+        fields = dict(
+            (line.split(":", 1)[0].strip(), line.split(":", 1)[1].strip())
+            for line in head.splitlines()
+            if ":" in line
+        )
+        state = fields.get("status")
+        if state not in states:
+            fail("archcore", f"{rel} declares status {state!r}, not one of {sorted(states)}")
+        if state == "accepted" and not fields.get("accepted"):
+            fail("archcore", f"{rel} is accepted but records no `accepted:` date")
+        if not fields.get("source"):
+            fail("archcore", f"{rel} has no `source:` provenance header")
+
+
 # --------------------------------------------------------------------------------------------------------------- MAIN
 
 CHECKS = (
+    check_archcore_frontmatter,
     check_referenced_paths,
     check_index_links,
     check_count_claims,
