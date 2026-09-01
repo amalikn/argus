@@ -160,9 +160,10 @@ Written so a clean run is never mistaken for a verified one.
 
 ## Memory pointers (navigation only — content is above)
 
-- memory-keeper channel `argus`, keys: `argus.plan.four-corrections`, `argus.audit.findings`, `argus.pricing.f5-measured`, `argus.core.normalized-model-spec`, `argus.adapters.mapping-tables`,
-  `argus.codex.two-format-generations`, `argus.fixtures.builder-defects`, `argus.fixtures.corpus-inventory`, `argus.tests.inventory-and-gates`, `argus.governance.archcore-and-checks`,
-  `argus.env.tooling-and-routing`, `argus.gotchas.platform-and-tooling`, `argus.milestones.2-6-complete`, `argus.next.m7-hermes`
-- memory-keeper checkpoint: `slurp-20260901-argus-m1-m6` (id d1836c0c, 202 items)
-- mcp-project-context project `argus` id `5a26968b-4e58-4b4f-ba64-a0526a7a4aed`; checkpoint `slurp-20260901-argus-m1-m6` (id f0b9ae18)
-- claude-mem: observations from 20260901 across the whole session
+- memory-keeper channel `argus`, 17 keys. Start with `session.closeout.20260902.argus-m1-m8-audit-coherence`, then `argus.governance.two-control-planes`, `argus.plan.four-corrections`,
+  `argus.audit.findings`, `argus.pricing.f5-measured`, `argus.codex.two-format-generations`, `argus.hermes.audit-and-adapter`, `argus.hermes.usage-is-a-logging-gap`,
+  `argus.core.normalized-model-spec`, `argus.adapters.mapping-tables`, `argus.tests.inventory-and-gates`, `argus.fixtures.corpus-inventory`, `argus.fixtures.builder-defects`,
+  `argus.governance.archcore-and-checks`, `argus.env.tooling-and-routing`, `argus.gotchas.platform-and-tooling`, `argus.milestones.2-6-complete`, `argus.next.m7-hermes`
+- memory-keeper checkpoints: `closeout-20260902-argus-m1-m8-audit-coherence` (f08121a1, 215 items), `slurp-20260901-argus-m7-m8` (a0cd65f9), `slurp-20260901-argus-m1-m6` (d1836c0c)
+- mcp-project-context project `argus` id `5a26968b-4e58-4b4f-ba64-a0526a7a4aed`; checkpoint `594a92c1`
+- claude-mem: observations across 20260901 and 20260902
