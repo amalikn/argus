@@ -4,6 +4,7 @@ Durable project and governance history. Append entries; do not rewrite historica
 
 ## Contents
 
+- [20260901_2015 — Milestone 3, Stop 2](#20260901_2015-milestone-3-stop-2)
 - [20260901_1950 — Milestone 2.5](#20260901_1950-milestone-25)
 - [20260901_1935 — Milestone 2.4](#20260901_1935-milestone-24)
 - [20260901_1915 — Milestone 2.1 to 2.3](#20260901_1915-milestone-21-to-23)
@@ -14,6 +15,29 @@ Durable project and governance history. Append entries; do not rewrite historica
 - [20260901_1708](#20260901_1708)
 
 ---
+
+## 20260901_2015 — Milestone 3, Stop 2
+
+### Added
+
+- `src/adapters/claude-code/`: `normalizer.ts`, `watcher.ts` and the `ClaudeCodeAdapter` implementing the adapter contract.
+- `tests/claude-adapter.test.ts`: 14 tests over detection, discovery, parsing into the normalized model, confidence marking, diagnostics and live watch.
+
+### Changed
+
+- `src/providers/sessionWebviewProviderReact.ts`: the two raw `fs.watch` calls are gone. Watching, debouncing, size deduplication and the lazy `subagents/` mount now live in `ClaudeWatcher`. Finding
+  F4 is closed; the provider decides what to do on a change and owns no filesystem handles.
+- `src/extension.ts`: registers the Claude adapter at activation.
+- `AgentProviderId` spelled with `string & Record<never, never>` rather than `string & {}`, which the lint rule bans. The open union is pinned by a test, so closing it would fail rather than pass
+  quietly.
+
+### Notes — Stop 2 report
+
+- **Claude parity holds.** All 16 parity snapshots are unchanged. The adapter delegates to the existing `ParserService` rather than reimplementing it, so the parse is byte for byte what it was and any
+  snapshot movement would have been a mapping bug and nothing else.
+- Two real mapping defects were caught by the new tests rather than by inspection: token usage is attached to assistant message steps, not only to tool calls, so the early returns for text, reasoning
+  and error steps dropped every usage event in a conversation-only session; and the watch test exposed that `fs.watch` registration is not effective instantly on macOS.
+- All six baseline gates pass. Tests: 81. Checks: 169.
 
 ## 20260901_1950 — Milestone 2.5
 

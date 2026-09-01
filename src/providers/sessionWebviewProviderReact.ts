@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { ClaudeWatcher } from '../adapters/claude-code/watcher';
+import { Disposable } from '../core/adapters/agentAdapter';
 import { ParserService } from '../services/parserService';
 import { AnalyzerService } from '../services/analyzerService';
 import { DiscoveryService } from '../services/discoveryService';
@@ -8,8 +10,7 @@ import { SessionDetail } from '../types/models';
 
 export class SessionWebviewProviderReact {
   private panels: Map<string, vscode.WebviewPanel> = new Map();
-  private watchers: Map<string, fs.FSWatcher> = new Map();
-  private subagentWatchers: Map<string, fs.FSWatcher> = new Map();
+  private watchHandles: Map<string, Disposable> = new Map();
 
   constructor(
     private context: vscode.ExtensionContext,
@@ -139,85 +140,26 @@ export class SessionWebviewProviderReact {
       return;
     }
 
-    let debounceTimer: NodeJS.Timeout | undefined;
-    let lastSize = 0;
-
-    try {
-      lastSize = fs.statSync(sessionInfo.filePath).size;
-    } catch {
-      // ignore
-    }
-
-    const triggerReload = () => {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
-      }
-      debounceTimer = setTimeout(async () => {
-        try {
-          const updatedData = await this.loadSessionData(sessionId);
-          if (updatedData) {
-            panel.webview.postMessage({
-              type: 'sessionData',
-              data: updatedData,
-            });
-          }
-        } catch (err) {
-          console.error('Error reloading session for live update:', err);
-        }
-      }, 500);
-    };
-
-    // Lazy-mounts a watcher on the subagents/ directory for this session.
-    // Claude Code creates the directory only when it first spawns an agent,
-    // so we (re-)try whenever the main file changes until it appears.
-    const ensureSubagentWatcher = () => {
-      if (this.subagentWatchers.has(sessionId)) return;
-      const subDir = this.parserService.getSubagentsDir(
-        sessionInfo.projectDir,
-        sessionId
-      );
-      if (!fs.existsSync(subDir)) return;
+    // Watching moved out of this class into the Claude adapter (finding F4). Watch logic living in a UI
+    // provider cannot be reused by another provider, cannot be tested without an extension host, and ties a
+    // filesystem handle to the lifetime of a panel. Debouncing, size deduplication and the lazy mount of the
+    // subagents/ directory now live in ClaudeWatcher; this class only decides what to do when it fires.
+    const reload = async () => {
       try {
-        const subWatcher = fs.watch(subDir, () => {
-          // Any add/change inside the subagents dir → reuse the same debounce
-          // so we don't double-reload when both main and agent files tick.
-          triggerReload();
-        });
-        this.subagentWatchers.set(sessionId, subWatcher);
+        const updatedData = await this.loadSessionData(sessionId);
+        if (updatedData) {
+          panel.webview.postMessage({ type: 'sessionData', data: updatedData });
+        }
       } catch (err) {
-        console.error('Failed to start subagent watcher:', err);
+        console.error('Error reloading session for live update:', err);
       }
     };
 
     try {
-      const watcher = fs.watch(sessionInfo.filePath, async (eventType) => {
-        if (eventType !== 'change') {
-          return;
-        }
-
-        // Skip if file size hasn't changed (avoids duplicate events)
-        try {
-          const currentSize = fs.statSync(sessionInfo.filePath).size;
-          if (currentSize === lastSize) {
-            return;
-          }
-          lastSize = currentSize;
-        } catch {
-          return;
-        }
-
-        // Cheap to retry on every change — fs.watch only fires on real writes
-        // and ensureSubagentWatcher short-circuits once mounted.
-        ensureSubagentWatcher();
-        triggerReload();
-      });
-
-      this.watchers.set(sessionId, watcher);
-
-      // The dir may already exist (re-opening a finished session).
-      ensureSubagentWatcher();
-
-      // Notify webview that live mode is active
+      this.watchHandles.set(
+        sessionId,
+        ClaudeWatcher.watch(sessionInfo.filePath, () => void reload(), { debounceMs: 500 })
+      );
       panel.webview.postMessage({ type: 'liveMode', active: true });
     } catch (err) {
       console.error('Failed to start file watcher:', err);
@@ -254,15 +196,10 @@ export class SessionWebviewProviderReact {
   }
 
   private stopWatching(sessionId: string): void {
-    const watcher = this.watchers.get(sessionId);
-    if (watcher) {
-      watcher.close();
-      this.watchers.delete(sessionId);
-    }
-    const subWatcher = this.subagentWatchers.get(sessionId);
-    if (subWatcher) {
-      subWatcher.close();
-      this.subagentWatchers.delete(sessionId);
+    const handle = this.watchHandles.get(sessionId);
+    if (handle) {
+      handle.dispose();
+      this.watchHandles.delete(sessionId);
     }
   }
 

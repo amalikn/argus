@@ -107,3 +107,12 @@ describe('adapter registry', () => {
     expect(bad.detection.reason).toContain('permission denied');
   });
 });
+
+describe('AgentProviderId stays open', () => {
+  it('accepts a provider id the core has never heard of', () => {
+    // The open union is what makes "add an adapter, not a core-type edit" true. If this stops compiling, the
+    // union was closed and every future provider becomes a change to shared types.
+    const future: import('../src/core/models/agentEvent').AgentProviderId = 'some-agent-invented-later';
+    expect(future).toBe('some-agent-invented-later');
+  });
+});

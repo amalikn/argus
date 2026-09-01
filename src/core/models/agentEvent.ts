@@ -6,7 +6,11 @@
  * indistinguishable to the compiler, and the error then surfaces as a rendering bug rather than a type error.
  */
 
-export type AgentProviderId = 'claude-code' | 'openai-codex' | 'hermes' | (string & {});
+// The trailing `string & Record<never, never>` keeps this union OPEN: any string is assignable, so a new
+// provider needs no core-type edit, while the named members still autocomplete. The more common spelling of
+// this idiom is `string & {}`, which is equivalent but is banned by the lint rule as a likely mistake — and
+// silencing that rule to keep a shorter spelling would be trading a real check for cosmetics.
+export type AgentProviderId = 'claude-code' | 'openai-codex' | 'hermes' | (string & Record<never, never>);
 
 /**
  * How much to trust a field.

@@ -1,4 +1,6 @@
 import * as path from 'path';
+import { registry } from './core/adapters/registry';
+import { claudeCodeAdapter } from './adapters/claude-code';
 import * as vscode from 'vscode';
 import { DiscoveryService } from './services/discoveryService';
 import { ParserService } from './services/parserService';
@@ -10,6 +12,12 @@ import { FilterState, DEFAULT_FILTER_STATE, GroupMode, DatePreset, SessionSummar
 import { getClaudeConfigDir } from './utils/claudePaths';
 
 export function activate(context: vscode.ExtensionContext) {
+  // Register the provider adapters. Claude Code is the reference implementation of the contract; Codex and
+  // Hermes register here too once they land, and nothing downstream needs to change when they do.
+  if (!registry.get(claudeCodeAdapter.id)) {
+    registry.register(claudeCodeAdapter);
+  }
+
   // Initialize services
   const discoveryService = new DiscoveryService();
   const parserService = new ParserService();
