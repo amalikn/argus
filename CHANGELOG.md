@@ -4,6 +4,7 @@ Durable project and governance history. Append entries; do not rewrite historica
 
 ## Contents
 
+- [20260902_0030 — Coherence sweep](#20260902_0030-coherence-sweep)
 - [20260901_2359 — Staleness audit](#20260901_2359-staleness-audit)
 - [20260901_2330 — Milestone 8](#20260901_2330-milestone-8)
 - [20260901_2245 — Milestone 7](#20260901_2245-milestone-7)
@@ -21,6 +22,39 @@ Durable project and governance history. Append entries; do not rewrite historica
 - [20260901_1708](#20260901_1708)
 
 ---
+
+## 20260902_0030 — Coherence sweep
+
+Asked one question of the whole repository: does it tell ONE story about what exists, what is done, what remains, and what is authoritative? It did not, in five places.
+
+### Contradictions found and resolved
+
+| #   | Contradiction                                                                | Source of truth         | Resolution                                                                            |
+| --- | ---------------------------------------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------- |
+| 1   | `README.md` — the first file anyone opens — described a Claude-only tool.    | `ARCHITECTURE.md` and   | Fork block appended, naming all three providers and stating plainly what is NOT yet   |
+|     |   Zero mentions of Codex, Hermes or multi-agent, while three adapters sat in |   the tree              |   true: only Claude is viewable, and the extension has never run in an Extension      |
+|     |   `src/adapters/`                                                            |                         |   Development Host                                                                    |
+| 2   | `AI_NAVIGATION.md`, the declared context entrypoint, was still the generic   | The project's own       | Project-specific routing added outside the managed block, answering the four          |
+|     |   template. It routed to no adapter and to neither audit                     |   artifacts             |   questions a reader actually arrives with                                            |
+| 3   | `.archcore/README.md` claimed "twenty-one documents" against 22 on disk. It  | The directory           | Corrected, and now DERIVED: `check_archcore_index_count` compares the sentence to the |
+|     |   drifted the moment Milestone 7 added a superseding ADR                     |                         |   folder                                                                              |
+| 4   | Residual risk lived in two places — a partial copy in `ROADMAP.md` and the   | `SCRATCHPAD.md`         | ROADMAP now carries buildable work items only and points at the register for          |
+|     |   full register in `SCRATCHPAD.md`                                           |                         |   everything else                                                                     |
+| 5   | Six ticked milestones were still described in future tense: M3 said watch    | `ROADMAP.md` checkboxes | Descriptions rewritten to record what happened, including the stop-gate results       |
+|     |   logic "currently lives inside the webview provider", which stopped being   |                         |                                                                                       |
+|     |   true when M3 moved it                                                      |                         |                                                                                       |
+
+### Added
+
+- `.archcore/rules/suite-is-not-governance-evidence.rule.md` — accepted. A green suite says nothing about whether the documentation is current; they are separate control planes. Written because this
+  project produced direct evidence: 188 checks green while an accepted document that OUTRANKS `AGENTS.md` gave the wrong instruction.
+- `check_archcore_index_count` — derives the index count from the directory rather than trusting the sentence.
+
+### Notes
+
+- The checker caught two of my own mistakes during this sweep, which is the point of it existing: a routing entry pointing at the rule file minutes before I wrote it, and the new rule sitting
+  uncatalogued in the archcore index.
+- Checks rose from 261 to 274. All six baseline gates still pass and all 16 parity snapshots hold — this was a documentation pass.
 
 ## 20260901_2359 — Staleness audit
 

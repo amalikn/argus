@@ -22,7 +22,8 @@ explicitly marked KEEP.
 
 ## Current state
 
-**Phase:** Milestones 1 to 8 complete and pushed. All three providers run behind the adapter contract. Milestones 9 to 11 remain and are all marked de-scopable.
+**Phase:** Milestones 1 to 8 complete and pushed, followed by a staleness audit and a coherence sweep. All three providers run behind the adapter contract. Milestones 9 to 11 remain and are all marked
+de-scopable. The repository now tells one story: `ROADMAP.md` is the completion surface, `SCRATCHPAD.md` holds the residual register, and `.archcore/` outranks both.
 
 The fork lives at `amalikn/argus` on branch `feat/multi-agent-observability`, with the unmodified upstream preserved at tag `baseline-upstream-argus`. All six quality gates now pass, where the
 baseline had one that could not run at all. Claude runs behind the adapter contract with its parity snapshots intact, cost resolves through one provider-neutral pricing table, and Codex is
@@ -74,6 +75,13 @@ discoverable, parseable, watchable and scale-tested. The UI reads provider ident
 ---
 
 ## Session history (summaries — full detail in claude-mem)
+
+### 20260902 — staleness audit and coherence sweep
+- Audit found 8 documentation defects behind a green suite, two of them in documents that outrank `AGENTS.md`. Added 4 checks, each proven able to fail.
+- Coherence sweep found 5 contradictions: the README told readers this was a Claude-only tool, the router named no adapter or audit, the archcore index count had drifted, residuals lived in two
+  places, and six ticked milestones were still described in future tense.
+- Promoted the durable rule that a passing suite is never evidence that governance is current. Checks 188 to 274.
+- Evidence basis: CHANGELOG 20260901_2359 and 20260902_0030.
 
 ### 20260901 — Milestone 8, Hermes adapter
 - Built the adapter for both Hermes forms; all three providers now sit behind the contract. 131 tests, 188 checks.

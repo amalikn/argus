@@ -750,9 +750,46 @@ def check_architecture_names_every_source_dir() -> None:
             fail("architecture", f"{rel} exists but ARCHITECTURE.md does not name it")
 
 
+
+_NUMBER_WORDS = {
+    "twenty": 20, "twenty-one": 21, "twenty-two": 22, "twenty-three": 23, "twenty-four": 24,
+    "twenty-five": 25, "twenty-six": 26, "twenty-seven": 27, "twenty-eight": 28, "twenty-nine": 29,
+    "thirty": 30, "thirty-one": 31, "thirty-two": 32,
+}
+
+
+def check_archcore_index_count() -> None:
+    """The document count in .archcore/README.md is derived from the directory, not authored.
+
+    An authored count drifts the moment a document is added, and it drifts SILENTLY because nothing compares the
+    sentence to the folder. This one said "twenty-one" for the hours between Milestone 7 adding a superseding ADR
+    and this check existing.
+
+    Rule: derive, never author. .archcore/README.md is the index; the directory is the thing indexed.
+    """
+    text = read(".archcore/README.md")
+    base = ROOT / ".archcore"
+    if text is None or not base.is_dir():
+        return
+
+    actual = sum(1 for p in base.rglob("*.md") if p.name != "README.md")
+    counted()
+
+    claimed = None
+    match = re.search(r"\b([A-Za-z-]+|\d+)\s+documents\b", text)
+    if match:
+        token = match.group(1).lower()
+        claimed = _NUMBER_WORDS.get(token, int(token) if token.isdigit() else None)
+
+    if claimed is None:
+        fail("archcore", ".archcore/README.md states no document count for the index to be checked against")
+    elif claimed != actual:
+        fail("archcore", f".archcore/README.md claims {claimed} documents; {actual} exist on disk")
+
 # --------------------------------------------------------------------------------------------------------------- MAIN
 
 CHECKS = (
+    check_archcore_index_count,
     check_architecture_names_every_source_dir,
     check_no_resolved_finding_asserted_open,
     check_capability_types_mirror,

@@ -27,18 +27,19 @@ Three halts are mandatory. At each, stop and report; do not proceed without an e
 
 - [x] **M1 — Audit and baseline.** Fork established, baseline tagged, six gates measured, code mapped to the plan conceptual roles, 12 findings recorded, fixture inventory across 10,072 sessions,
   pricing layer built. No source file modified.
-- [x] **M2 — Provider-neutral core.** Reordered by finding F1: test harness first, because the parity snapshot has nowhere to live without one.
+- [x] **M2 — Provider-neutral core.** Reordered by finding F1: test harness first, because the parity snapshot had nowhere to live without one.
   - [x] M2.1 Select and wire a test harness
   - [x] M2.2 Extract and sanitize Claude fixtures (12 of 15 categories sourceable; 3 synthesized)
   - [x] M2.3 Snapshot current Claude normalized behaviour
   - [x] M2.4 `PricingProvider` replacing both hardcoded cost tables
   - [x] M2.5 `AgentSession`, `AgentEvent`, adapter interface, registry, capabilities, diagnostics
-- [x] **M3 — Claude adapter migration.** Move discovery, parsing and watching behind the adapter contract. Harder than planned: watch logic currently lives inside the webview provider.
-- [x] **M4 — UI provider-neutralization.** Largest single chunk, roughly 4700 lines of React.
-- [x] **M5 — Codex discovery and parser.** Read-only historical parsing first.
-- [x] **M6 — Codex live watch and scale hardening.**
+- [x] **M3 — Claude adapter migration.** Discovery, parsing and watching moved behind the adapter contract. Harder than planned, as expected: watch logic had to be extracted from the webview provider
+  (finding F4). Stop 2 green — all 16 parity snapshots held.
+- [x] **M4 — UI provider-neutralization.** Provider badges, a provider filter and capability-gated panels. The generic event renderer was deliberately deferred and is the largest open item.
+- [x] **M5 — Codex discovery and parser.** Read-only historical parsing, reading both rollout format generations.
+- [x] **M6 — Codex live watch and scale hardening.** Offset-resumable incremental reads. Stop 3 green — 15 MB in 381 ms, incremental append 4 ms.
 - [x] **M7 — Hermes source audit.** Complete. Found a second, larger `session_*.json` store the accepted ADR had missed; superseding ADR written. No token usage exists in either format.
-- [x] **M8 — Hermes adapter.**
+- [x] **M8 — Hermes adapter.** Reads the snapshot as primary and the mirror as secondary. All three providers now sit behind the contract.
 - [ ] **M9 — Unified analysis.** De-scopable. Six rules to port, enumerated in finding F9.
 - [ ] **M10 — Search, export, privacy.** De-scopable. Smaller than planned: there is no telemetry to strip, only a guard to add.
 - [ ] **M11 — CI, performance, release.** De-scopable. Greenfield; upstream has no CI. Extension id must change in both `name` and `publisher`.
@@ -55,12 +56,14 @@ All three blockers recorded at Milestone 1 are cleared.
 
 ### Open
 
+Work items only. The full picture of what is unresolved — including risks that are not work items, such as the Hermes adapter resting on a negative finding — is the residual-risk register in
+[SCRATCHPAD.md](SCRATCHPAD.md). That register is the single source; this table lists only the subset that is buildable.
+
 | Item                                                        | Effect                                                                                              |
 | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | Generic event renderer not built                            | The webview still consumes `SessionDetail`, so Codex and Hermes sessions parse but are not viewable |
 | Never launched in an Extension Development Host             | Every gate is static; nothing proves it renders a session                                           |
 | Codex tiered above-threshold pricing stored but not applied | Very long turns are costed at the base rate                                                         |
-| Codex writes two rollout format generations                 | Both are read, but a third will arrive unannounced                                                  |
 
 ## Completed
 

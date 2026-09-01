@@ -29,8 +29,10 @@ Every document below carries a `source:` header naming where it was promoted fro
 
 Promoted 20260901 by `skill-ai-it promote` from `ARCHCORE_PROMOTION_CANDIDATES.md`, which was deleted in the same pass because a queue that outlives its proposals becomes a stale second index.
 
-All twenty-one documents were reviewed and moved to `status: accepted` on 20260901, and each carries an `accepted:` date beside its `date:`. They now sit at the top of the source-priority order: where
-one of them disagrees with `AGENTS.md`, a narrative document or `SCRATCHPAD.md`, the Archcore document wins. Superseding one means writing a replacement that names it, not editing it in place.
+Twenty-three documents: twenty-two `accepted` and one `superseded`. All were reviewed and accepted on 20260901, and each carries an `accepted:` date beside its `date:`. The count is checked against
+the directory by `check_archcore_index_count`, so it cannot drift the way it did when Milestone 7 added a document and this sentence still said twenty-one. They now sit at the top of the
+source-priority order: where one of them disagrees with `AGENTS.md`, a narrative document or `SCRATCHPAD.md`, the Archcore document wins. Superseding one means writing a replacement that names it, not
+editing it in place.
 
 ## adr — architecture decisions
 
@@ -46,15 +48,16 @@ one of them disagrees with `AGENTS.md`, a narrative document or `SCRATCHPAD.md`,
 
 ## rules — durable project and agent rules
 
-| Document                                 | Governs                                                                        |
-| ---------------------------------------- | ------------------------------------------------------------------------------ |
-| [0001 Upstream is fetch-only](rules/upstream-is-fetch-only.rule.md)              | The upstream push URL stays disabled                                           |
-| [0002 Agent evidence is read-only](rules/agent-evidence-is-read-only.rule.md)         | Never write to a provider transcript store, and never into a scanned directory |
-| [0003 Undefined is not zero](rules/undefined-is-not-zero.rule.md)               | A missing metric is undefined; zero means the source said zero                 |
-| [0004 No provider conditionals downstream](rules/no-provider-conditionals-downstream.rule.md) | Capability flags, never provider ids, in UI and analysis code                  |
-| [0005 No bare interpreters](rules/no-bare-interpreters.rule.md)                | Recipes address pinned interpreters by path. Machine-enforced                  |
-| [0006 Fix the project, not the check](rules/fix-the-project-not-the-check.rule.md)      | Never narrow a governance check to make a run green                            |
-| [0007 Anti-patterns](rules/anti-patterns.rule.md)                       | Seven named defects, each observed rather than hypothetical                    |
+| Document                                 | Governs                                                                                                 |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| [0001 Upstream is fetch-only](rules/upstream-is-fetch-only.rule.md)              | The upstream push URL stays disabled                                                                    |
+| [0002 Agent evidence is read-only](rules/agent-evidence-is-read-only.rule.md)         | Never write to a provider transcript store, and never into a scanned directory                          |
+| [0003 Undefined is not zero](rules/undefined-is-not-zero.rule.md)               | A missing metric is undefined; zero means the source said zero                                          |
+| [0004 No provider conditionals downstream](rules/no-provider-conditionals-downstream.rule.md) | Capability flags, never provider ids, in UI and analysis code                                           |
+| [0005 No bare interpreters](rules/no-bare-interpreters.rule.md)                | Recipes address pinned interpreters by path. Machine-enforced                                           |
+| [0006 Fix the project, not the check](rules/fix-the-project-not-the-check.rule.md)      | Never narrow a governance check to make a run green                                                     |
+| [0007 Anti-patterns](rules/anti-patterns.rule.md)                       | Seven named defects, each observed rather than hypothetical                                             |
+| [Suite is not governance evidence](rules/suite-is-not-governance-evidence.rule.md)         | A green suite says nothing about whether the documentation is current; they are separate control planes |
 
 ## specs — design and data contracts
 
