@@ -81,7 +81,7 @@ the UI.
 - [ ] Token and context data appear ONLY where the source reported them
 - [ ] An unrecognized rollout record renders neutrally, carrying its `rawType`, neither dropped nor coloured as an error
 - [ ] The Cost view does not show an empty or zero state merely because pricing is unavailable — the capability flag should hide it
-- [ ] A live append appears without reopening the session
+- [ ] A live append appears without reopening the session — **NOT IMPLEMENTED** as of `3ee0c4c`. The adapters expose `watch()`, but `ProviderSessionService` does not call it, so a projected provider does not update in place. Record as NOT IMPLEMENTED, not FAIL: it is absent work, not broken work
 
 ## R4 — Hermes rendering
 
@@ -104,7 +104,7 @@ Open Claude, then Codex, then Hermes, then Claude again.
 - [ ] Capability-gated tabs update between providers
 - [ ] Model, cost and context metadata do not leak between sessions
 - [ ] Provider-specific state clears on navigation
-- [ ] Concurrent live watchers do not cross-update sessions
+- [ ] Concurrent live watchers do not cross-update sessions — **NOT IMPLEMENTED** for projected providers, same reason as R3
 
 ## R6 — Recording the result
 

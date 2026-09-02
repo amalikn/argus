@@ -245,3 +245,63 @@ describe('CodexAdapter bare rollout generation', () => {
     expect(unknown[0].rawType).toContain('totally_new_record_kind');
   });
 });
+
+describe('CodexAdapter parse-outcome invariant', () => {
+  /**
+   * The rule this incident earned: a source that HELD records and produced NO events must fail loudly, unless every record it
+   * held was explicitly classified as ignorable. Silence is only acceptable when the adapter can account for every record it
+   * chose not to use.
+   *
+   * The old `empty-session` warning could not express this. It fired for both states with one message, so six unreadable
+   * 1.9 MB rollouts and a genuinely empty file were indistinguishable in the only place a reader would look.
+   */
+  const scratch = mkdtempSync(join(tmpdir(), 'argus-codex-outcome-'));
+
+  function rollout(name: string, body: string) {
+    const file = join(scratch, `${name}.jsonl`);
+    writeFileSync(file, body);
+    return {
+      id: name,
+      providerId: 'openai-codex',
+      source: { providerId: 'openai-codex', clientName: 'Codex', sourceKind: 'jsonl' as const, sourcePath: file },
+    };
+  }
+
+  it('reports a file with no records as source-empty, at info', async () => {
+    const session = await adapter.parse(rollout('none', '') as never);
+    const diag = session.diagnostics.find((d) => d.code === 'source-empty');
+    expect(diag?.severity).toBe('info');
+  });
+
+  it('reports a file of nothing but ignorable framing as source-empty, not as a defect', async () => {
+    // Every record accounted for as deliberately suppressed. The file really does carry nothing.
+    const session = await adapter.parse(rollout('framing', '{"record_type":"state"}\n'.repeat(4)) as never);
+    expect(session.events).toHaveLength(0);
+    const diag = session.diagnostics.find((d) => d.code === 'source-empty');
+    expect(diag?.severity).toBe('info');
+    expect(session.diagnostics.some((d) => d.severity === 'error')).toBe(false);
+  });
+
+  it('reports records-in-no-events-out as parsed-empty, at error', async () => {
+    // THE INVARIANT. turn_context records are read and understood, and emit no event by design. A rollout of nothing but
+    // those held records and produced nothing, and the adapter must say so rather than render an empty session in silence.
+    const body = '{"type":"turn_context","payload":{"cwd":"/x"}}\n'.repeat(3);
+    const session = await adapter.parse(rollout('silent', body) as never);
+    expect(session.events).toHaveLength(0);
+    const diag = session.diagnostics.find((d) => d.code === 'parsed-empty');
+    expect(diag).toBeDefined();
+    expect(diag?.severity).toBe('error');
+    expect(diag?.message).toContain('3 record(s) were read but produced no events');
+  });
+
+  it('does not report an outcome diagnostic for an ordinary healthy parse', async () => {
+    // A diagnostic on every successful parse is noise, and noise trains readers to ignore diagnostics.
+    const session = await adapter.parse(discovered('01-session-basics') as never);
+    const codes = session.diagnostics.map((d) => d.code);
+    expect(codes).not.toContain('parsed-empty');
+    expect(codes).not.toContain('source-empty');
+    expect(codes).not.toContain('unsupported-format');
+  });
+
+  afterAll(() => rmSync(scratch, { recursive: true, force: true }));
+});

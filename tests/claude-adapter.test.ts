@@ -123,14 +123,34 @@ describe('ClaudeCodeAdapter parsing into the normalized model', () => {
     expect(session).toBeDefined();
   });
 
-  it('reports an empty transcript as a diagnostic rather than silently', async () => {
+  it('reports a genuinely empty transcript as source-empty, at info', async () => {
+    // A file with no records is a fact about the file, not a defect. It must not be loud.
     const empty = join(root, 'projects', '-tmp-fixture-project', 'empty.jsonl');
     writeFileSync(empty, '');
     const session = await adapter.parse({
       ...discovered('empty'),
       source: { providerId: 'claude-code', clientName: 'Claude Code', sourceKind: 'jsonl', sourcePath: empty },
     });
-    expect(session.diagnostics.some((d) => d.code === 'empty-session')).toBe(true);
+    const diag = session.diagnostics.find((d) => d.code === 'source-empty');
+    expect(diag).toBeDefined();
+    expect(diag?.severity).toBe('info');
+  });
+
+  it('reports a transcript with records but no events as parsed-empty, at error', async () => {
+    // THE INVARIANT. This is the 20260902 Codex incident expressed for Claude: a source that held records and produced
+    // nothing must fail loudly, because an adapter returning nothing and a session containing nothing render identically.
+    // The old `empty-session` warning covered both this and the case above with one indistinguishable message.
+    const opaque = join(root, 'projects', '-tmp-fixture-project', 'opaque.jsonl');
+    writeFileSync(opaque, '{"unrecognized":"shape"}\n{"another":"one"}\n');
+    const session = await adapter.parse({
+      ...discovered('opaque'),
+      source: { providerId: 'claude-code', clientName: 'Claude Code', sourceKind: 'jsonl', sourcePath: opaque },
+    });
+    expect(session.events).toHaveLength(0);
+    const diag = session.diagnostics.find((d) => d.code === 'parsed-empty');
+    expect(diag).toBeDefined();
+    expect(diag?.severity).toBe('error');
+    expect(session.diagnostics.some((d) => d.code === 'source-empty')).toBe(false);
   });
 });
 

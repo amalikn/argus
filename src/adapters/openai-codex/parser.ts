@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as readline from 'readline';
 import { AgentEvent } from '../../core/models/agentEvent';
+import { classifyParse } from '../../core/models/parseOutcome';
 import { AgentSession, AgentSourceDescriptor, ParseDiagnostic, emptySession } from '../../core/models/agentSession';
 import { pricing } from '../../core/pricing/pricingProvider';
 import {
@@ -119,6 +120,9 @@ export async function parseRolloutIncremental(
   let consumed = options.fromOffset ?? 0;
   let malformed = 0;
   let stateMarkers = 0;
+  // Every record read lands in exactly one bucket, so "no events came out" becomes answerable rather than merely observable.
+  let recordsSeen = 0;
+  let recordsUnrecognized = 0;
   let sawExec = false;
   let sawExecOutput = false;
   let sawPatch = false;
@@ -164,9 +168,11 @@ export async function parseRolloutIncremental(
       // is counted, and `consumed` is deliberately NOT advanced past it: if it was a partial write, the next
       // read must start at its beginning to pick up the completed record.
       malformed += 1;
+      recordsSeen += 1;
       continue;
     }
 
+    recordsSeen += 1;
     const seq = sequence++;
     const base = {
       id: `${sessionId}:${seq}`,
@@ -491,6 +497,7 @@ export async function parseRolloutIncremental(
         // discarded in silence rather than preserved - defeating, for exactly the records that need it most, the
         // mechanism that exists to make an unrecognized record visible. A record that reached this point was read from
         // the store and parsed as JSON, so its existence is a fact regardless of whether its shape is understood.
+        recordsUnrecognized += 1;
         events.push({ ...base, kind: 'provider.unknown', payload, confidence: 'exact' });
         break;
     }
@@ -512,8 +519,22 @@ export async function parseRolloutIncremental(
       message: `${stateMarkers} bare "record_type" framing record(s) carried no content and were not emitted as events`,
     });
   }
-  if (events.length === 0) {
-    diagnostics.push({ severity: 'warning', code: 'empty-session', message: 'no parseable records in rollout' });
+  // Replaces the old `empty-session` warning, which said "no parseable records in rollout" for a 1.9 MB file holding 1,546
+  // perfectly parseable records. It described the parser's result, not the source. See core/models/parseOutcome.ts.
+  const outcome = classifyParse(
+    {
+      recordsSeen,
+      // A record that produced an event, minus the ones counted in the other buckets. Derived rather than incremented at
+      // every push site, because there are twenty of those and one of them would eventually be forgotten.
+      recordsInterpreted: Math.max(0, recordsSeen - stateMarkers - recordsUnrecognized - malformed),
+      recordsIgnored: stateMarkers,
+      recordsUnrecognized,
+      recordsMalformed: malformed,
+    },
+    events.length
+  );
+  if (outcome) {
+    diagnostics.push(outcome);
   }
 
   session.events = events;

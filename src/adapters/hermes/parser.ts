@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as readline from 'readline';
 import { AgentEvent, Confidence } from '../../core/models/agentEvent';
+import { classifyParse } from '../../core/models/parseOutcome';
 import { AgentSession, AgentSourceDescriptor, ParseDiagnostic, emptySession } from '../../core/models/agentSession';
 import { pricing } from '../../core/pricing/pricingProvider';
 
@@ -156,6 +157,10 @@ interface Accumulator {
   sawReasoning: boolean;
   sawUsage: boolean;
   contextWindow?: number;
+  /** Records read from the source before interpretation, and how each was accounted for. See core/models/parseOutcome.ts. */
+  recordsSeen: number;
+  recordsUnrecognized: number;
+  recordsMalformed: number;
 }
 
 function newAccumulator(): Accumulator {
@@ -163,6 +168,7 @@ function newAccumulator(): Accumulator {
     events: [], diagnostics: [], sequence: 0, callNames: new Map(),
     sawShell: false, sawShellOutput: false, sawRead: false, sawWrite: false,
     sawEdit: false, sawNetwork: false, sawDelegation: false, sawReasoning: false, sawUsage: false,
+    recordsSeen: 0, recordsUnrecognized: 0, recordsMalformed: 0,
   };
 }
 
@@ -180,6 +186,7 @@ function addMessage(acc: Accumulator, message: HermesMessage, sessionId: string)
   // A synthetic recovery record is something Hermes fabricated, not something the agent did. Rendering it as an
   // assistant message would put an invented turn in a forensic timeline, so it is preserved as unknown instead.
   if (message._empty_recovery_synthetic) {
+    acc.recordsUnrecognized += 1;
     acc.events.push({ ...base, kind: 'provider.unknown', payload: message, confidence: 'exact' as Confidence });
     return;
   }
@@ -361,6 +368,23 @@ function finish(session: AgentSession, acc: Accumulator): AgentSession {
   // Metrics stay undefined unless something was actually read. undefined means the source does not expose it;
   // zero would mean it reported zero, and those are different claims.
   session.metrics = { contextWindowTokens: acc.contextWindow };
+
+  // Replaces the per-path `empty-session` warning. "The snapshot carries no messages" and "the messages carried nothing this
+  // adapter could normalize" are different claims, and only the second is a defect. Both paths land here, so a future Hermes
+  // format that this parser cannot read fails loudly instead of rendering as an empty session.
+  const outcome = classifyParse(
+    {
+      recordsSeen: acc.recordsSeen,
+      recordsInterpreted: Math.max(0, acc.recordsSeen - acc.recordsUnrecognized - acc.recordsMalformed),
+      recordsIgnored: 0,
+      recordsUnrecognized: acc.recordsUnrecognized,
+      recordsMalformed: acc.recordsMalformed,
+    },
+    session.events.length
+  );
+  if (outcome) {
+    session.diagnostics.push(outcome);
+  }
   return session;
 }
 
@@ -397,9 +421,10 @@ export async function parseSnapshot(filePath: string, source: AgentSourceDescrip
       message: `message_count says ${snapshot.message_count} but ${messages.length} messages are present`,
     });
   }
-  if (messages.length === 0) {
-    acc.diagnostics.push({ severity: 'warning', code: 'empty-session', message: 'snapshot carries no messages' });
-  }
+  // Deliberately NOT classified here. A snapshot with no messages is a fact about the file, but whether the SESSION is empty
+  // is only knowable once the messages have been normalized - a snapshot can carry messages that yield no events, which is the
+  // state the old `empty-session` warning could not express. classifyParse runs at the end of the parse, over the real counts.
+  acc.recordsSeen = messages.length;
 
   for (const message of messages) {
     addMessage(acc, message, sessionId);
@@ -490,6 +515,8 @@ export async function parseMirror(
       message: `${dropped} record(s) could not be parsed and were skipped`,
     });
   }
+  acc.recordsMalformed = dropped;
+  acc.recordsSeen += dropped;
   // A mirror with no header row is normal: 7 of 60 audited files have none.
   if (!session.model) {
     acc.diagnostics.push({

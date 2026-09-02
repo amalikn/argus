@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as readline from 'readline';
 import * as path from 'path';
 import {
   AdapterDetectionContext,
@@ -11,6 +12,7 @@ import {
   SessionDiscoveryContext,
   WatchContext,
 } from '../../core/adapters/agentAdapter';
+import { classifyParse } from '../../core/models/parseOutcome';
 import { AgentSession, AgentSessionDelta, AgentSourceDescriptor, ParseDiagnostic } from '../../core/models/agentSession';
 import { ParserService } from '../../services/parserService';
 import { getClaudeConfigDir } from '../../utils/claudePaths';
@@ -129,13 +131,6 @@ export class ClaudeCodeAdapter implements AgentAdapter {
 
     const diagnostics: ParseDiagnostic[] = [];
     const events = await this.parser.parseFile(filePath);
-    if (events.length === 0) {
-      diagnostics.push({
-        severity: 'warning',
-        code: 'empty-session',
-        message: 'no parseable records in transcript',
-      });
-    }
 
     const detail = this.parser.buildSession(
       events,
@@ -160,7 +155,35 @@ export class ClaudeCodeAdapter implements AgentAdapter {
       });
     }
 
-    return normalizeSession(detail, discovered.source, diagnostics);
+    const session = normalizeSession(detail, discovered.source, diagnostics);
+
+    // "No events" and "no records" are different claims, and the old `empty-session` warning could not tell them apart. A
+    // transcript holding records that yield nothing is an adapter gap; an empty file is a fact about the file. See
+    // core/models/parseOutcome.ts for the incident that made this structural.
+    //
+    // Classified AFTER normalization, deliberately. `parser.parseFile` returns RAW records, not normalized events, and the
+    // two counts differ - a first draft of this compared raw records against raw records and could never have fired. The
+    // question this answers is "records went in and no events came out", so it can only be asked once the events exist.
+    //
+    // The tally is COARSE here by design. A precise one would need ParserService to report per-record outcomes, and that is
+    // the legacy Claude path this fork deliberately leaves alone. Counting non-blank lines separates the two states that
+    // matter, and claiming more precision than the parser exposes would be worse than claiming less.
+    const rawLines = await countNonBlankLines(filePath);
+    const outcome = classifyParse(
+      {
+        recordsSeen: rawLines,
+        recordsInterpreted: session.events.length > 0 ? rawLines : 0,
+        recordsIgnored: 0,
+        recordsUnrecognized: 0,
+        recordsMalformed: 0,
+      },
+      session.events.length
+    );
+    if (outcome) {
+      session.diagnostics.push(outcome);
+    }
+
+    return session;
   }
 
   async watch(
@@ -223,3 +246,26 @@ export class ClaudeCodeAdapter implements AgentAdapter {
 }
 
 export const claudeCodeAdapter = new ClaudeCodeAdapter();
+
+/**
+ * Non-blank line count, streamed rather than read whole: a Claude transcript can be tens of megabytes and this runs on every
+ * parse. Returns 0 on any read failure, which classifies as `source-empty` — the honest answer when the file cannot be counted.
+ */
+async function countNonBlankLines(filePath: string): Promise<number> {
+  try {
+    const rl = readline.createInterface({
+      input: fs.createReadStream(filePath, { encoding: 'utf8' }),
+      crlfDelay: Infinity,
+    });
+    let n = 0;
+    for await (const line of rl) {
+      if (line.trim()) {
+        n += 1;
+      }
+    }
+    rl.close();
+    return n;
+  } catch {
+    return 0;
+  }
+}

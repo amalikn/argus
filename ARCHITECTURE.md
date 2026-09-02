@@ -11,6 +11,7 @@ Describes the fork as it stands at Milestone 1, and the target shape the plan mo
 - [Key decisions and constraints](#key-decisions-and-constraints)
 - [Known structural obstacles](#known-structural-obstacles)
 - [Related documents](#related-documents)
+- [Source generations are unwrapped, not branched on](#source-generations-are-unwrapped-not-branched-on)
 
 ---
 
@@ -116,3 +117,27 @@ Kept rather than deleted, because the shape of the codebase still reflects how e
 - [docs/argus-multi-agent-implementation-plan-20260901_1708.md](docs/argus-multi-agent-implementation-plan-20260901_1708.md) — the governing plan
 - [docs/architecture/current-state-audit.md](docs/architecture/current-state-audit.md) — the measured baseline and findings F1 to F12
 - [ROADMAP.md](ROADMAP.md) — milestone sequence and stop gates
+
+## Source generations are unwrapped, not branched on
+
+A provider's on-disk format changes over time, and the shapes accumulate rather than replace each other: a store holds sessions written by every version the user has ever run. Codex alone writes three
+generations, found on 20260902 when six rollouts parsed to nothing.
+
+| Generation | Shape                                                                                                                                                                                   |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Envelope   | `{type: 'response_item' \| 'event_msg' \| 'session_meta' \| 'turn_context', payload: {...}}` — the item is wrapped                                                                      |
+| Bare       | The line IS the item: `{type: 'message', role: 'assistant', content: [...]}` at the top level, after a `{id, timestamp, instructions}` header, interleaved with                         |
+|            |   `{"record_type":"state"}` framing                                                                                                                                                     |
+
+**The rule this produced: unwrap the generation, then dispatch once.**
+
+```
+raw line -> detect generation -> unwrap to a common item -> ONE item dispatcher -> normalized events
+```
+
+Not a parser per generation. When the bare generation was found, every record kind it used — `message`, `reasoning`, `function_call`, `function_call_output` — was already implemented and simply never
+reached, because dispatch read `record.payload.type` and a bare record has no `payload`. The fix was eleven lines of unwrapping and no new parsing at all. A generation-specific parser would have
+duplicated all of it, and would have had to be written again for the next generation.
+
+The same reasoning applies to any adapter. Branching on generation belongs at the boundary where the shape is detected, in exactly the same way that branching on provider belongs in discovery and
+normalization and nowhere else.

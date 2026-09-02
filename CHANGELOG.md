@@ -4,6 +4,7 @@ Durable project and governance history. Append entries; do not rewrite historica
 
 ## Contents
 
+- [20260902_1610 — Adapter-wide parse-outcome taxonomy](#20260902_1610-adapter-wide-parse-outcome-taxonomy)
 - [20260902_1540 — M5 defect: a third Codex rollout generation](#20260902_1540-m5-defect-a-third-codex-rollout-generation)
 - [20260902_1030 — Codex and Hermes wired to the webview](#20260902_1030-codex-and-hermes-wired-to-the-webview)
 - [20260902_1010 — Event projection](#20260902_1010-event-projection)
@@ -24,6 +25,56 @@ Durable project and governance history. Append entries; do not rewrite historica
 - [20260901_1800](#20260901_1800)
 - [20260901_1745](#20260901_1745)
 - [20260901_1708](#20260901_1708)
+
+---
+
+## 20260902_1610 — Adapter-wide parse-outcome taxonomy
+
+Generalized the 20260902_1540 defect from one Codex generation into a rule every adapter obeys. The important result of that incident was never "six sessions fixed" — it was a structural ambiguity
+that `empty-session` collapsed:
+
+```
+the source contains nothing        !=        the parser understood nothing
+```
+
+`empty-session` was emitted by all three adapters, so all three could produce that ambiguity.
+
+### Five outcomes, one vocabulary
+
+Added [src/core/models/parseOutcome.ts](src/core/models/parseOutcome.ts). Every adapter now reports at most one outcome from a shared set, derived from a tally in which every record read lands in
+exactly one bucket.
+
+| Code                 | Meaning                                                                                            | Severity |
+| -------------------- | -------------------------------------------------------------------------------------------------- | -------- |
+| `source-empty`       | The source holds nothing meaningful — no records, or nothing but records known to carry no content | info     |
+| `parsed-empty`       | Records were read and understood, and normalization still produced no events                       | **error**    |
+| `unsupported-format` | Records present, none of a structure this adapter supports. A format generation it cannot read     | **error**    |
+| `malformed-source`   | The source could not be read as data at all                                                        | **error**    |
+| `partial-source`     | Some records interpreted, some not. The session renders with gaps                                  | warning  |
+
+**The invariant, stated once:** a source that held records and produced no events is an error, unless every record it held was explicitly classified as ignorable. Silence is acceptable only when the
+adapter can account for every record it declined to use. A healthy parse emits no outcome diagnostic at all, because a diagnostic on every success trains readers to ignore diagnostics.
+
+### The governing distinction for suppression
+
+> Unknown semantic content must survive. Known structural noise may be deliberately suppressed — but suppression must be counted and diagnosed.
+
+`718 state markers skipped` and `718 records silently vanished` describe the same bytes and are not the same claim. The first is a parser decision with evidence; the second is data loss.
+
+### A dead check, caught by writing the test properly
+
+The first Claude implementation compared raw records against raw records: `parser.parseFile` returns RAW records, not normalized events, so the tally read `recordsSeen: 2, eventsEmitted: 2` and the
+diagnostic could not have fired under any input. It surfaced only because the test asserted the observable outcome — `parsed-empty` at `error` — rather than asserting that the code ran. Classification
+now happens after normalization, where the question "records went in and no events came out" can actually be asked. Recorded because a check that cannot fail is the exact defect class this project
+keeps finding, and this time it was self-inflicted.
+
+### Validation
+
+161 tests, up from 156. Six new outcome tests across the Claude and Codex adapters; two proven able to fail by relaxing `parsed-empty` from error to warning. Whole-store rescan: 723 Codex rollouts, 0
+parse to zero events. All Claude parity snapshots unchanged; five gates pass; checks 298.
+
+Also recorded: [ARCHITECTURE.md](ARCHITECTURE.md) gains "Source generations are unwrapped, not branched on", and the runtime render gate now marks projected-provider live watch as NOT IMPLEMENTED
+rather than leaving it to fail as though it were broken.
 
 ---
 
