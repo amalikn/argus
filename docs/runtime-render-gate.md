@@ -81,7 +81,8 @@ the UI.
 - [ ] Token and context data appear ONLY where the source reported them
 - [ ] An unrecognized rollout record renders neutrally, carrying its `rawType`, neither dropped nor coloured as an error
 - [ ] The Cost view does not show an empty or zero state merely because pricing is unavailable — the capability flag should hide it
-- [ ] A live append appears without reopening the session — **NOT IMPLEMENTED** as of `3ee0c4c`. The adapters expose `watch()`, but `ProviderSessionService` does not call it, so a projected provider does not update in place. Record as NOT IMPLEMENTED, not FAIL: it is absent work, not broken work
+- [ ] A live append appears without reopening the session — **NOT IMPLEMENTED** as of `3ee0c4c`. The adapters expose `watch()`, but `ProviderSessionService` does not call it, so a projected provider
+  does not update in place. Record as NOT IMPLEMENTED, not FAIL: it is absent work, not broken work
 
 ## R4 — Hermes rendering
 
@@ -218,3 +219,24 @@ that are not UNDERSTOOD, and this one is understood exactly — it carries no in
 
 Regression coverage: five tests over a SYNTHESIZED fixture, `tests/fixtures/codex/10-bare-generation.jsonl`. Synthesized, not harvested, because all six real rollouts contain work against a company
 repository. Three of the five were proven able to fail by reverting the unwrap.
+
+### R1 cannot be driven by an agent in this environment — recorded so it is not rediscovered
+
+Six mechanisms were tried against the Extension Development Host on 20260902. All failed, for reasons that are properties of the environment rather than of the extension:
+
+| Mechanism                               | Outcome                                                                                                                                                    |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Accessibility screen capture (MCP)      | Refused for the whole session by the capture host, and the refusal is fixed for that session's lifetime                                                    |
+| Accessibility window focus (MCP)        | Refused: the action raises an application, which requires foreground authorization this caller does not have                                               |
+| `peekaboo see --capture-engine classic` | `Bridge operation target attribution failed` — incomplete exact-window identity evidence                                                                   |
+|   (CLI)                                 |                                                                                                                                                            |
+| System Events `click at {x, y}`         | Lands on whichever window is topmost at that point. Raising the host by pid does not reliably do so, because the host and the operator's own editor are    |
+|                                         |   both processes named `Code`. Two clicks landed in the operator's window                                                                                  |
+| System Events keystrokes                | Same targeting problem, and destabilised the host window                                                                                                   |
+| System Events menu-bar traversal        | macOS exposes only the frontmost application's menu bar, so this reduces to the same raise problem                                                         |
+
+What DOES work, and is how the evidence above was gathered: `screencapture -x -o -l <window-id>` with a window id from a fresh window listing. It reads the window without touching it — enough to
+observe, never enough to interact.
+
+**The durable fix is not a better click.** It is `@vscode/test-electron`, which drives the host in-process and turns R1 to R5 into an automated gate. That is Milestone 11 work and is not yet started.
+Until it exists, R1 requires a person: run `just edh`, click the Argus icon, and record what appears.
