@@ -22,17 +22,24 @@ explicitly marked KEEP.
 
 ## Current state
 
-**Phase:** Milestones 1 to 8 complete and pushed, followed by a staleness audit and a coherence sweep. All three providers run behind the adapter contract. Milestones 9 to 11 remain and are all marked
-de-scopable. The repository now tells one story: `ROADMAP.md` is the completion surface, `SCRATCHPAD.md` holds the residual register, and `.archcore/` outranks both.
+**Phase:** Milestones 1 to 8 complete, then a staleness audit, a coherence sweep, and on 20260902 the first work that reaches the SCREEN rather than the model: the extension is launchable, Codex and
+Hermes are wired to the webview, and a real parser defect was found and fixed by looking at runtime behaviour instead of at tests. All three providers run behind the adapter contract. Milestones 9 to
+11 remain and are all marked de-scopable. The repository now tells one story: `ROADMAP.md` is the completion surface, `SCRATCHPAD.md` holds the residual register, and `.archcore/` outranks both.
 
 The fork lives at `amalikn/argus` on branch `feat/multi-agent-observability`, with the unmodified upstream preserved at tag `baseline-upstream-argus`. All six quality gates now pass, where the
 baseline had one that could not run at all. Claude runs behind the adapter contract with its parity snapshots intact, cost resolves through one provider-neutral pricing table, and Codex is
 discoverable, parseable, watchable and scale-tested. The UI reads provider identity and capability flags rather than branching on provider.
 
+The one thing still not true: **no provider has been confirmed to display a session.** The extension launches and activates, and both new providers parse correctly against the real local stores, but
+`R1` of the runtime render gate is `NOT RUN`. That is the single blocker, and it is a tooling problem rather than a product one.
+
 ---
 
 ## Open items
 
+- [ ] The `@vscode/test-electron` harness is written but does not run. The downloaded VS Code 1.135.0 app bundle ships a single `Code` executable and no `Electron` one, and that binary rejects every
+  CLI flag with `bad option`. Committed in a non-working state alongside the `just gate` recipe, so `just gate` currently FAILS. It must also override `--extensions-dir` and `--user-data-dir`, which
+  test-electron defaults to `<repo>/.vscode-test/`, inside the repository.
 - [ ] The runtime render gate has never passed. As of 20260902 the extension launches and activates, Codex and Hermes are wired to the webview through the projection, and Claude keeps its original
   path — but no provider has been confirmed to put a session on screen. Run `just edh`, work through [docs/runtime-render-gate.md](docs/runtime-render-gate.md), record the result in its log.
 - [ ] The event-native tab is not built. The projection cannot carry per-event `confidence` or an unknown event's payload, so both are invisible in the UI. That tab is where they belong.
@@ -43,25 +50,34 @@ discoverable, parseable, watchable and scale-tested. The UI reads provider ident
 
 ## Key anchors
 
-| Item               | Detail                                                                                            |
-| ------------------ | ------------------------------------------------------------------------------------------------- |
-| Fork               | `https://github.com/amalikn/argus`, branch `feat/multi-agent-observability`                       |
-| Upstream           | `yessGlory17/argus`, fetch-only, push URL set to `DISABLED_read_only_upstream`                    |
-| Baseline           | commit `3bfbd8b`, tag `baseline-upstream-argus`                                                   |
-| Plan               | [docs/argus-multi-agent-implementation-plan-20260901_1708.md](docs/argus-multi-agent-implementation-plan-20260901_1708.md)                                       |
-| Audit              | [docs/architecture/current-state-audit.md](docs/architecture/current-state-audit.md)                                                          |
-| Claude transcripts | `~/.claude/projects` — 10,072 sessions, 1,018,178 lines, 5.03 GB, zero undecodable lines          |
-| Codex rollouts     | `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl` — 722 files, `{type, timestamp, payload}` per line |
-| Hermes sessions    | `~/.hermes/sessions/*.jsonl` — structured per turn, NOT `~/.hermes/logs/`                         |
-| Pricing source     | LiteLLM dataset, vendored to `src/pricing/model-pricing.json`, 2571 models                        |
-| Node runtime       | 22.23.2 via mise pin                                                                              |
-| Python runtime     | 3.14.7 via `tools-working-cache/argus/venv`                                                       |
-| Gate logs and VSIX | `tools-runtime/argus/`                                                                            |
+| Item               | Detail                                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------------------ |
+| Fork               | `https://github.com/amalikn/argus`, branch `feat/multi-agent-observability`                            |
+| Upstream           | `yessGlory17/argus`, fetch-only, push URL set to `DISABLED_read_only_upstream`                         |
+| Baseline           | commit `3bfbd8b`, tag `baseline-upstream-argus`                                                        |
+| Plan               | [docs/argus-multi-agent-implementation-plan-20260901_1708.md](docs/argus-multi-agent-implementation-plan-20260901_1708.md)                                            |
+| Audit              | [docs/architecture/current-state-audit.md](docs/architecture/current-state-audit.md)                                                               |
+| Claude transcripts | `~/.claude/projects` — 10,072 sessions, 1,018,178 lines, 5.03 GB, zero undecodable lines               |
+| Codex rollouts     | `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl` — 722 files, `{type, timestamp, payload}` per line      |
+| Hermes sessions    | `~/.hermes/sessions/*.jsonl` — structured per turn, NOT `~/.hermes/logs/`                              |
+| Pricing source     | LiteLLM dataset, vendored to `src/pricing/model-pricing.json`, 2571 models                             |
+| Node runtime       | 22.23.2 via mise pin                                                                                   |
+| Python runtime     | 3.14.7 via `tools-working-cache/argus/venv`                                                            |
+| Render gate        | [docs/runtime-render-gate.md](docs/runtime-render-gate.md) — R1 to R6, run by hand, result log treats FAIL and NOT RUN as first-class |
+| Launch the host    | `just edh` (or F5). Profile in `tools-working-cache/argus/edh-user-data`                               |
+| VS Code test build | `tools-working-cache/argus/vscode-test`                                                                |
+| Gate logs and VSIX | `tools-runtime/argus/`                                                                                 |
 
 ---
 
 ## Recent decisions
 
+- 20260902 — Projection first, event-native tab after. Codex and Hermes reach the webview through `eventsToSessionDetail()`; Claude keeps its original path. The dual path is deliberate, and Claude
+  convergence is gated on the generic path proving richer-or-equal against the sixteen parity fixtures, every difference classified. A lossy regression blocks it.
+- 20260902 — Five parse outcomes replace `empty-session` in every adapter. A source that held records and produced no events is an ERROR unless every record was explicitly classified as ignorable.
+- 20260902 — Unknown semantic content must survive; known structural noise may be suppressed, but suppression must be counted and diagnosed. `{"record_type":"state"}` is skipped with a count.
+- 20260902 — Source generations are unwrapped, then dispatched once. Not a parser per generation.
+- 20260902 — Stop changing parser semantics (operator). The next useful information can only come from runtime rendering.
 - 20260901 — Hermes anchors on `~/.hermes/sessions/*.jsonl`, not `~/.hermes/logs/`. The structured store was located before implementation, so Milestone 7 starts from evidence rather than discovery.
 - 20260901 — Reasoning is parsed but gated: never cached as text, masked in the UI, replaced by a placeholder in default exports, included only in the explicit unredacted export. The original absolute
   prohibition was unimplementable because two of three providers persist reasoning in the evidence.
@@ -74,6 +90,14 @@ discoverable, parseable, watchable and scale-tested. The UI reads provider ident
 ---
 
 ## Session history (summaries — full detail in claude-mem)
+
+### 20260902 — render gate, wiring, and a real parser defect
+- Made the extension launchable for the first time (`just edh`, F5); upstream shipped no launch configuration, which is why it reached Milestone 8 unrun. `--user-data-dir` is load-bearing: without it
+  the `code` CLI silently drops `--extensionDevelopmentPath` and exits 0.
+- Wired Codex and Hermes to the webview through a projection, Claude untouched. Found and fixed a THIRD Codex rollout generation: six rollouts up to 1.9 MB parsed to zero events because dispatch read
+  a `payload` that bare records do not have. Whole store now 0 of 723 empty.
+- Generalized that into an adapter-wide parse-outcome taxonomy, and caught my own dead check in the process — the first version compared raw records against raw records and could never have fired.
+- Evidence basis: commits c05264d, 1f253d5, 3ee0c4c, 64a4cce, abdb618, 583d1e2.
 
 ### 20260902 — staleness audit and coherence sweep
 - Audit found 8 documentation defects behind a green suite, two of them in documents that outrank `AGENTS.md`. Added 4 checks, each proven able to fail.
@@ -112,9 +136,12 @@ discoverable, parseable, watchable and scale-tested. The UI reads provider ident
 
 ## Next actions
 
-- Run the runtime render gate: `just edh`, then work down R1 to R5 in [docs/runtime-render-gate.md](docs/runtime-render-gate.md). R1 gates the rest.
-- Then the generic event renderer, targeting Codex viewability.
-- Consider the generic event renderer now that two real provider shapes exist to design against.
+1. **R1 of the runtime render gate.** `just edh`, click the Argus icon, check four things: the view opens, the list populates, Codex sessions appear, they carry a provider badge. Record in the result
+   log of [docs/runtime-render-gate.md](docs/runtime-render-gate.md). **This cannot be done by an agent in this environment** — six mechanisms failed, all environmental.
+2. **Finish the `@vscode/test-electron` harness**, which removes the human from R1 permanently. Blocked on executable resolution; see the open items.
+3. **R2 to R5 straight through**, before any further architecture. The project needs evidence that the product renders, not more evidence that the parser model is internally sound.
+4. Event-native tab, for what the projection cannot carry: per-event `confidence`, and the payload and provider identity of an unknown event.
+5. Wire `watch()` for projected providers, so the live-watch checks stop being `NOT IMPLEMENTED`.
 
 ---
 
@@ -159,10 +186,13 @@ Written so a clean run is never mistaken for a verified one.
 
 ## Memory pointers (navigation only — content is above)
 
-- memory-keeper channel `argus`, 17 keys. Start with `session.closeout.20260902.argus-m1-m8-audit-coherence`, then `argus.governance.two-control-planes`, `argus.plan.four-corrections`,
-  `argus.audit.findings`, `argus.pricing.f5-measured`, `argus.codex.two-format-generations`, `argus.hermes.audit-and-adapter`, `argus.hermes.usage-is-a-logging-gap`,
-  `argus.core.normalized-model-spec`, `argus.adapters.mapping-tables`, `argus.tests.inventory-and-gates`, `argus.fixtures.corpus-inventory`, `argus.fixtures.builder-defects`,
-  `argus.governance.archcore-and-checks`, `argus.env.tooling-and-routing`, `argus.gotchas.platform-and-tooling`, `argus.milestones.2-6-complete`, `argus.next.m7-hermes`
-- memory-keeper checkpoints: `closeout-20260902-argus-m1-m8-audit-coherence` (f08121a1, 215 items), `slurp-20260901-argus-m7-m8` (a0cd65f9), `slurp-20260901-argus-m1-m6` (d1836c0c)
-- mcp-project-context project `argus` id `5a26968b-4e58-4b4f-ba64-a0526a7a4aed`; checkpoint `594a92c1`
+- memory-keeper channel `argus`, 24 keys. For THIS session start with `argus.gate.runtime-render-gate`, `argus.gate.electron-harness`, `argus.codex.third-rollout-generation`,
+  `argus.diagnostics.parse-outcome-taxonomy`, `argus.view.projection-and-wiring`, `argus.edh.launch-and-automation-limits`, and the rewritten `argus.next.m7-hermes`. For the earlier work start with
+  `session.closeout.20260902.argus-m1-m8-audit-coherence`, then `argus.governance.two-control-planes`, `argus.plan.four-corrections`, `argus.audit.findings`, `argus.pricing.f5-measured`,
+  `argus.codex.two-format-generations`, `argus.hermes.audit-and-adapter`, `argus.hermes.usage-is-a-logging-gap`, `argus.core.normalized-model-spec`, `argus.adapters.mapping-tables`,
+  `argus.tests.inventory-and-gates`, `argus.fixtures.corpus-inventory`, `argus.fixtures.builder-defects`, `argus.governance.archcore-and-checks`, `argus.env.tooling-and-routing`,
+  `argus.gotchas.platform-and-tooling`, `argus.milestones.2-6-complete`, `argus.next.m7-hermes`
+- memory-keeper checkpoints: `slurp-20260902-render-gate-and-taxonomy` (4b16a65e, 243 items), `closeout-20260902-argus-m1-m8-audit-coherence` (f08121a1, 215 items), `slurp-20260901-argus-m7-m8`
+  (a0cd65f9), `slurp-20260901-argus-m1-m6` (d1836c0c)
+- mcp-project-context project `argus` id `5a26968b-4e58-4b4f-ba64-a0526a7a4aed`; checkpoints `ea3d0a3a` (20260902 evening), `594a92c1`
 - claude-mem: observations across 20260901 and 20260902

@@ -1,0 +1,12 @@
+{
+  // The in-host gate suite compiles separately from the extension: it has its own rootDir, and folding it into the main
+  // tsconfig would put test code inside the packaged extension. Output lands beside the compiled extension in out/ so the
+  // suite can require the adapters it needs to obtain real session ids.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "tests/integration",
+    "outDir": "out/integration"
+  },
+  "include": ["tests/integration/**/*"],
+  "exclude": ["node_modules", "out"]
+}

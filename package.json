@@ -1,7 +1,7 @@
 {
   "name": "argus-claude",
   "displayName": "Argus - Claude Code Agent Monitoring & Observability on VSCode",
-  "description": "Monitoring and observability for Claude Code agent sessions inside VS Code \u2014 live transcripts, cost telemetry, context-window metrics, dependency graphs, and rule-based analysis of tool calls, retry loops, and compaction events.",
+  "description": "Monitoring and observability for Claude Code agent sessions inside VS Code — live transcripts, cost telemetry, context-window metrics, dependency graphs, and rule-based analysis of tool calls, retry loops, and compaction events.",
   "version": "0.3.1",
   "publisher": "argus-claude",
   "author": {
@@ -255,6 +255,7 @@
     "@typescript-eslint/parser": "^6.0.0",
     "@vitejs/plugin-react": "^5.1.4",
     "@vitest/coverage-v8": "^3.2.7",
+    "@vscode/test-electron": "^3.1.0",
     "eslint": "^8.0.0",
     "rimraf": "^6.0.1",
     "typescript": "^5.0.0",

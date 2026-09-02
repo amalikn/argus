@@ -91,6 +91,16 @@ webview:
 # Build what the Extension Development Host loads: the compiled extension in out/ plus the webview bundle it serves.
 edh-build: compile webview
 
+# Compile the in-host gate suite. Separate tsconfig: test code must not land inside the packaged extension.
+gate-build: edh-build
+    {{npx}} tsc -p ./tsconfig.integration.json
+
+# Run the automated portion of the runtime render gate: launches a real VS Code, loads this extension, drives it from inside.
+# Proves activation, that the view container opens and that a session opens per provider. Does NOT prove anything visual -
+# list population and provider badges stay manual in docs/runtime-render-gate.md.
+gate: gate-build
+    {{node}} scripts/run-integration-tests.mjs
+
 # Launch the extension in a second VS Code window with other extensions disabled. Same thing F5 does, reachable from a terminal.
 edh: edh-build
     mkdir -p {{cache}}/edh-user-data
