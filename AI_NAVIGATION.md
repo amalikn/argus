@@ -172,6 +172,12 @@ Written by hand, outside the managed block, because it names this project's own 
 2. `src/adapters/<provider>/` — `claude-code`, `openai-codex`, `hermes`. The parser is the specification; the audit is the evidence behind it.
 3. [.archcore/specs/confidence-markers.spec.md](.archcore/specs/confidence-markers.spec.md) for why the same field is `exact` on one provider and `derived` on another.
 
+### "Does it actually work?"
+
+1. [docs/runtime-render-gate.md](docs/runtime-render-gate.md) — the product gate. Six static gates and 293 governance checks say nothing about whether a session ever reaches a screen; this one is run
+   by hand in an Extension Development Host and its result log is the evidence. A static gate and a product gate are different claims and must never be blurred.
+2. `just edh` launches that host. `just baseline` runs the static gates.
+
 ### "Why is the code shaped like this?"
 
 1. [.archcore/adr/](.archcore/adr/) — seven decisions, one superseded. Read the index first.

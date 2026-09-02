@@ -6,6 +6,7 @@ import { Disposable } from '../core/adapters/agentAdapter';
 import { ParserService } from '../services/parserService';
 import { AnalyzerService } from '../services/analyzerService';
 import { DiscoveryService } from '../services/discoveryService';
+import { ProviderSessionService } from '../services/providerSessionService';
 import { SessionDetail } from '../types/models';
 
 export class SessionWebviewProviderReact {
@@ -16,7 +17,12 @@ export class SessionWebviewProviderReact {
     private context: vscode.ExtensionContext,
     private discoveryService: DiscoveryService,
     private parserService: ParserService,
-    private analyzerService: AnalyzerService
+    private analyzerService: AnalyzerService,
+    /**
+     * Every provider except Claude. Claude keeps the path below unchanged, guarded by its parity snapshots; a session this
+     * service owns never reaches that code. Optional so a test can construct the provider without it.
+     */
+    private providerSessions?: ProviderSessionService
   ) {}
 
   async openSessionDetail(sessionId: string): Promise<void> {
@@ -206,6 +212,16 @@ export class SessionWebviewProviderReact {
   private async loadSessionData(sessionId: string): Promise<SessionDetail | null> {
     try {
       console.log('🔍 Loading session:', sessionId);
+
+      // Non-Claude providers parse through their adapter and project onto SessionDetail. This returns before any of the Claude
+      // path below runs, so that path is reached only by the provider it was written for.
+      if (this.providerSessions?.owns(sessionId)) {
+        const projected = await this.providerSessions.load(sessionId);
+        if (projected) {
+          console.log('✅ Session projected:', projected.providerId, projected.steps.length, 'steps');
+        }
+        return projected;
+      }
 
       const sessionInfo = this.discoveryService.getSessionFilePath(sessionId);
       if (!sessionInfo) {

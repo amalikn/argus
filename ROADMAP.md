@@ -75,11 +75,14 @@ All three blockers recorded at Milestone 1 are cleared.
 Work items only. The full picture of what is unresolved — including risks that are not work items, such as the Hermes adapter resting on a negative finding — is the residual-risk register in
 [SCRATCHPAD.md](SCRATCHPAD.md). That register is the single source; this table lists only the subset that is buildable.
 
-| Item                                                        | Effect                                                                                              |
-| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Generic event renderer not built                            | The webview still consumes `SessionDetail`, so Codex and Hermes sessions parse but are not viewable |
-| Never launched in an Extension Development Host             | Every gate is static; nothing proves it renders a session                                           |
-| Codex tiered above-threshold pricing stored but not applied | Very long turns are costed at the base rate                                                         |
+| Item                                                        | Effect                                                                                                                                 |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Runtime render gate has never passed                        | The extension launches and activates, and every provider is now wired to the webview, but no provider has been confirmed to display a  |
+|                                                             |   session. See [docs/runtime-render-gate.md](docs/runtime-render-gate.md)                                                                                             |
+| Event-native tab not built                                  | The projection cannot carry per-event `confidence` or an unknown event's payload, so both are currently invisible in the UI            |
+| Claude has not converged onto the projection                | Two paths are maintained: Claude parses to `SessionDetail` directly, everything else projects. Deliberate, and gated on the generic    |
+|                                                             |   path proving richer-or-equal                                                                                                         |
+| Codex tiered above-threshold pricing stored but not applied | Very long turns are costed at the base rate                                                                                            |
 
 ## Completed
 

@@ -5,6 +5,7 @@ import { codexAdapter } from './adapters/openai-codex';
 import { hermesAdapter } from './adapters/hermes';
 import * as vscode from 'vscode';
 import { DiscoveryService } from './services/discoveryService';
+import { ProviderSessionService } from './services/providerSessionService';
 import { ParserService } from './services/parserService';
 import { AnalyzerService } from './services/analyzerService';
 import { SessionWebviewProviderReact } from './providers/sessionWebviewProviderReact';
@@ -30,13 +31,16 @@ export function activate(context: vscode.ExtensionContext) {
   const discoveryService = new DiscoveryService();
   const parserService = new ParserService();
   const analyzerService = new AnalyzerService();
+  // Every provider except Claude, which keeps its existing path and its parity snapshots. See providerSessionService.ts.
+  const providerSessions = new ProviderSessionService(registry);
 
   // Initialize providers
   const webviewProvider = new SessionWebviewProviderReact(
     context,
     discoveryService,
     parserService,
-    analyzerService
+    analyzerService,
+    providerSessions
   );
 
   // Filter state
@@ -121,7 +125,8 @@ export function activate(context: vscode.ExtensionContext) {
     discoveryPromise = (async () => {
       try {
         await discoveryService.refreshDiscovery();
-        allSessions = await discoveryService.getSessionList();
+        await providerSessions.refresh();
+        allSessions = [...(await discoveryService.getSessionList()), ...providerSessions.summaries()];
         refreshList();
       } finally {
         discoveryPromise = null;
@@ -242,7 +247,8 @@ export function activate(context: vscode.ExtensionContext) {
         async () => {
           try {
             await discoveryService.refreshDiscovery();
-            allSessions = await discoveryService.getSessionList();
+            await providerSessions.refresh();
+            allSessions = [...(await discoveryService.getSessionList()), ...providerSessions.summaries()];
             refreshList();
             vscode.window.showInformationMessage(`Sessions refreshed (${allSessions.length} found)`);
           } catch (error) {
@@ -326,18 +332,20 @@ export function activate(context: vscode.ExtensionContext) {
 
   watcher.onDidCreate(async () => {
     await discoveryService.refreshDiscovery();
-    allSessions = await discoveryService.getSessionList(true);
+    await providerSessions.refresh();
+    allSessions = [...(await discoveryService.getSessionList(true)), ...providerSessions.summaries()];
     refreshList();
   });
 
   watcher.onDidChange(async () => {
-    allSessions = await discoveryService.getSessionList();
+    allSessions = [...(await discoveryService.getSessionList()), ...providerSessions.summaries()];
     refreshList();
   });
 
   watcher.onDidDelete(async () => {
     await discoveryService.refreshDiscovery();
-    allSessions = await discoveryService.getSessionList(true);
+    await providerSessions.refresh();
+    allSessions = [...(await discoveryService.getSessionList(true)), ...providerSessions.summaries()];
     refreshList();
   });
 

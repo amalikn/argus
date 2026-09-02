@@ -33,10 +33,10 @@ discoverable, parseable, watchable and scale-tested. The UI reads provider ident
 
 ## Open items
 
-- [ ] The generic event renderer is not built. The webview still consumes `SessionDetail`, so a Codex session is parseable but not yet viewable.
-- [ ] The Argus view has never been seen rendering. As of 20260902 the extension DOES load and activate in a real Extension Development Host — `just edh` or F5, and the host log records the activation
-  with no argus-side error. What is still unverified is the view itself: screen capture was refused for that whole session, and scripted keystrokes into the host window destabilised it. The remaining
-  step is a human one — run `just edh`, click the Argus icon in the activity bar, and confirm sessions list and a Claude session opens.
+- [ ] The runtime render gate has never passed. As of 20260902 the extension launches and activates, Codex and Hermes are wired to the webview through the projection, and Claude keeps its original
+  path — but no provider has been confirmed to put a session on screen. Run `just edh`, work through [docs/runtime-render-gate.md](docs/runtime-render-gate.md), record the result in its log.
+- [ ] The event-native tab is not built. The projection cannot carry per-event `confidence` or an unknown event's payload, so both are invisible in the UI. That tab is where they belong.
+- [ ] Claude has not converged onto the projection, deliberately. Two paths are maintained until the generic one is proven richer-or-equal against the sixteen parity fixtures, not merely prettier.
 - [ ] Codex tiered above-threshold pricing is stored but not applied, so very long turns are costed at the base rate.
 
 ---
@@ -112,7 +112,7 @@ discoverable, parseable, watchable and scale-tested. The UI reads provider ident
 
 ## Next actions
 
-- Confirm by eye that the Argus view renders: `just edh`, then click the Argus icon. The host launches and the extension activates; only the rendering is unconfirmed.
+- Run the runtime render gate: `just edh`, then work down R1 to R5 in [docs/runtime-render-gate.md](docs/runtime-render-gate.md). R1 gates the rest.
 - Then the generic event renderer, targeting Codex viewability.
 - Consider the generic event renderer now that two real provider shapes exist to design against.
 

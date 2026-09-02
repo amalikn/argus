@@ -4,6 +4,7 @@ Durable project and governance history. Append entries; do not rewrite historica
 
 ## Contents
 
+- [20260902_1030 — Codex and Hermes wired to the webview](#20260902_1030-codex-and-hermes-wired-to-the-webview)
 - [20260902_1010 — Event projection](#20260902_1010-event-projection)
 - [20260902_0900 — Extension Development Host](#20260902_0900-extension-development-host)
 - [20260902_0030 — Coherence sweep](#20260902_0030-coherence-sweep)
@@ -22,6 +23,50 @@ Durable project and governance history. Append entries; do not rewrite historica
 - [20260901_1800](#20260901_1800)
 - [20260901_1745](#20260901_1745)
 - [20260901_1708](#20260901_1708)
+
+---
+
+## 20260902_1030 — Codex and Hermes wired to the webview
+
+Connected the projection to the UI through a second path, leaving Claude's path untouched.
+
+### The dual path, and why it is not temporary sloppiness
+
+| Provider             | Route                                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------ |
+| Claude Code          | `DiscoveryService` and `ParserService` to `SessionDetail`, exactly as before. Unchanged    |
+| OpenAI Codex, Hermes | adapter `parse()` to `AgentSession`, then `eventsToSessionDetail()`, then the same webview |
+
+Routing Claude through a projection that had never rendered anything would put the one working provider at risk in order to make two non-working ones work. The sixteen parity snapshots are the only
+thing protecting that path, and they test the parser rather than the route taken to reach it — so a mistaken re-route would not have made them red. Convergence is a later decision with its own gates:
+the generic path must be proven richer-or-equal against those fixtures, with every difference classified as unchanged, an intentional fix, or a lossy regression. A lossy regression blocks it.
+Architectural tidiness alone does not justify it.
+
+### Added
+
+| Artifact                               | Purpose                                                                    |
+| -------------------------------------- | -------------------------------------------------------------------------- |
+| [src/services/providerSessionService.ts](src/services/providerSessionService.ts) | Discovers, lists and loads sessions for every provider except Claude       |
+| [tests/provider-session-service.test.ts](tests/provider-session-service.test.ts) | Nine tests, written against the isolation rules rather than the happy path |
+| [docs/runtime-render-gate.md](docs/runtime-render-gate.md)            | The product gate: R1 to R6, run by hand, with a result log                 |
+
+The blast radius is two call sites. `extension.ts` merges the two session lists; `SessionWebviewProviderReact.loadSessionData` returns early for a session the new service owns, so the Claude code
+below it is reached only by the provider it was written for.
+
+### The static gates were never the product gate
+
+Six green gates and 296 governance checks say nothing about whether a session reaches a screen. That is a structural property of static gates, not an oversight, and the new document exists so the two
+claims cannot be blurred: when a provider fails to render, the static gates stay green and the product gate is marked FAIL. Its result log records failures and `NOT RUN` as first-class values, because
+an absent record and a passing record must never look the same.
+
+### Validation
+
+151 tests pass, up from 142. The sixteen Claude parity snapshots are byte-unchanged. Two tests were proven able to fail: removing the Claude exclusion from the new service turns `never claims a Claude
+session` red, and that test exists precisely because the parity snapshots would not have caught a mistaken re-route. All five gates pass; checks 296.
+
+### Still not verified
+
+No provider has been confirmed to display a session. The extension launches and activates; the render gate has never been run to a pass.
 
 ---
 
