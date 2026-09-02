@@ -4,6 +4,7 @@ Durable project and governance history. Append entries; do not rewrite historica
 
 ## Contents
 
+- [20260902_1010 — Event projection](#20260902_1010-event-projection)
 - [20260902_0900 — Extension Development Host](#20260902_0900-extension-development-host)
 - [20260902_0030 — Coherence sweep](#20260902_0030-coherence-sweep)
 - [20260901_2359 — Staleness audit](#20260901_2359-staleness-audit)
@@ -21,6 +22,40 @@ Durable project and governance history. Append entries; do not rewrite historica
 - [20260901_1800](#20260901_1800)
 - [20260901_1745](#20260901_1745)
 - [20260901_1708](#20260901_1708)
+
+---
+
+## 20260902_1010 — Event projection
+
+Added [src/core/view/eventsToSessionDetail.ts](src/core/view/eventsToSessionDetail.ts), which projects a normalized `AgentSession` onto the Claude-shaped `SessionDetail` the webview still consumes.
+Chosen over an event-native renderer because the webview is twelve tabs and roughly 4,600 lines built around `SessionDetail`: a projection makes all twelve work for every provider in one step, where a
+rewrite would make one tab work for three providers and leave six tabs Claude-only until each was ported.
+
+The projection is a bridge with a stated load limit, not the destination. Seventeen event kinds collapse into five `StepType`s, and two things survive nowhere in the target type: the per-event
+`confidence` field, and the payload and provider identity of a `provider.unknown` event. Those belong to the event-native tab that follows.
+
+### Three distinctions the projection preserves
+
+| Distinction                            | Why it is not cosmetic                                                                                                                                      |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| unknown is not absent                  | Dropping a `provider.unknown` event produces the failure that event kind exists to prevent: a provider adds a record type, the adapter notices it, the      |
+|                                        |   projection discards it, and the UI looks complete while under-reporting the session. Unknown events become a neutral `text` step carrying the provider's  |
+|                                        |   own `rawType`                                                                                                                                             |
+| unknown is not an error                | "I do not understand this record" is not "the provider failed". An `error` step would assert a failure that did not happen, and teach users to ignore red   |
+| an unreported outcome is not a success | `tool.result` with no `isError` means the source did not say. `toolSuccess` stays `undefined`; coercing it to `true` invents evidence                       |
+
+The raw payload deliberately does not reach the timeline. It is unbounded provider data and the timeline is read linearly, so one large unknown record would bury the session around it. It stays on the
+event.
+
+### Validation
+
+Nine tests in [tests/events-to-session-detail.test.ts](tests/events-to-session-detail.test.ts), 142 passing overall. The two unknown-event tests were proven able to fail: reverting the policy to
+`return null` turns both red. All five gates pass; checks 291, after `check_architecture_names_every_source_dir` correctly caught `src/core/view` before it was documented.
+
+### Not yet wired
+
+Nothing calls the projection. The webview provider still receives Claude-parsed `SessionDetail` directly, so Codex and Hermes remain unviewable until that call site changes. That is the next step, and
+it is deliberately separate: this commit adds a pure function with tests and changes no existing behaviour.
 
 ---
 
@@ -48,13 +83,12 @@ from `out/`. Recorded because the failure is silent in both directions: the comm
 
 ### What the run established, and what it did not
 
-| Claim                                           | Status                                                                                                                                             |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The extension loads and activates in a real VS  | verified — `ExtensionService#_doActivateExtension argus-claude.argus-claude` in the host log, across three separate host processes                 |
-|   Code host                                     |                                                                                                                                                    |
-| No argus-side error is logged during activation | verified — the only exception in the host log is `spawn EBADF` raised by VS Code's own built-in git extension, not by this code                    |
-| The Argus view renders a session                | NOT verified. Screen capture was refused for the whole session by the capture host, and scripted keystrokes into the host window destabilised it.  |
-|                                                 |   This remains open in SCRATCHPAD                                                                                                                  |
+| Claim                                                    | Status                                                                                                                                    |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| The extension loads and activates in a real VS Code host | verified — `ExtensionService#_doActivateExtension argus-claude.argus-claude` in the host log, across three separate host processes        |
+| No argus-side error is logged during activation          | verified — the only exception in the host log is `spawn EBADF` raised by VS Code's own built-in git extension, not by this code           |
+| The Argus view renders a session                         | NOT verified. Screen capture was refused for the whole session by the capture host, and scripted keystrokes into the host window          |
+|                                                          |   destabilised it. This remains open in SCRATCHPAD                                                                                        |
 
 An extension host did exit with code 5 on the first run, twenty-two seconds after activation. It did not recur across two later runs, and the run that produced it was the run being driven by injected
 keystrokes. It is recorded here as an observation, not as a finding against this code.
