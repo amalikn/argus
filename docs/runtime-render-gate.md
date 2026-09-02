@@ -129,5 +129,54 @@ Webview errors:            <count>
 
 <!-- count:asat -->
 
-No run has passed yet. The gate was written on 20260902 alongside the wiring it tests; the extension is known to launch and activate, and no provider has yet been confirmed to render. That is the open
-item this document exists to close.
+### 20260902_1030 — commit `3ee0c4c` — R1 INCOMPLETE
+
+```
+R1 — Extension activation
+
+Argus activity view opens:      NOT RUN
+Session list populates:         NOT RUN
+Codex sessions present:         NOT RUN
+Codex provider badge present:   NOT RUN
+Extension Host errors:          0
+Webview console errors:         0
+
+Overall R1: NOT RUN
+```
+
+`NOT RUN`, not `FAIL`. Nothing about the extension prevented the check; the operator harness could not drive the click. Recording it as a failure would assert a defect that no evidence supports.
+
+**What WAS established, from a window capture of the host:**
+
+| Observation                              | Evidence                                                                                                         |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| The extension activates                  | `ExtensionService#_doActivateExtension argus-claude.argus-claude` in the host log, across several host processes |
+| The Argus view container is contributed  | A sixth icon is present in the activity bar of the Extension Development Host                                    |
+| The Argus status-bar item is contributed | "Argus" is rendered at the right of the status bar                                                               |
+| No errors or warnings                    | The status bar problem counters read `0` and `0`                                                                 |
+
+**Why the click could not be driven.** Screen capture through the accessibility harness was refused for the session; its focus action is refused as foreground execution; and a raw coordinate click
+cannot be aimed, because the development host and the operator's own editor are both processes named `Code`, so raising one by pid does not reliably put it under the cursor. Two clicks landed in the
+operator's own window before this was understood. Neither modified a file — the working tree stayed clean — but the approach was wrong and was abandoned rather than retried.
+
+### 20260902_1030 — commit `3ee0c4c` — data-path probe (NOT a render proof)
+
+The list and projection were exercised headlessly against the real local stores, through the same code the UI calls. This proves what the list *would* contain and what the projection *would* produce.
+It proves nothing about pixels, and does not substitute for R1 to R5.
+
+| Probe                                      | Result                                                                                                                    |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| Sessions the new service would list        | 722 Codex, 167 Hermes                                                                                                     |
+| Claude sessions claimed by the new service | none — the isolation rule holds against the real store, not only against a fake adapter                                   |
+| Provider labels                            | "Codex" and "Hermes", taken from each adapter                                                                             |
+| Codex richest of 40 sampled                | 1,639 steps — 753 text, 454 thinking, 432 tool calls — model `gpt-5-codex`, cost $84.58, 496 steps carrying usage         |
+| Hermes richest of 40 sampled               | 1,022 steps — 202 text, 408 thinking, 412 tool calls — 14 files read, 22 written, tools including `Bash`, `Read`, `Write` |
+| Hermes cost and usage                      | `0` and no step carrying usage, which is what the source audit predicted and the capability flags declare                 |
+| Codex sessions parsing to zero steps       | 6 of 40 sampled, each with an `empty-session` diagnostic                                                                  |
+
+Two things in that table are worth reading twice. Hermes reporting no usage anywhere is a *confirmation* rather than a gap — the audit found none in the store, the adapter declares `tokenUsage` false,
+and the projection did not invent any. And Codex showing zero files read or written is expected rather than broken: Codex performs file work through its `shell` tool, so there are no typed file events
+to collect.
+
+**Open question, not yet a finding.** Six of forty sampled Codex rollouts parse to no records at all. That is plausibly correct — an aborted session leaves an empty rollout — but it has not been
+confirmed against the files, and an adapter silently returning nothing looks identical to a session that genuinely contains nothing. Worth one look before the render gate is run.
