@@ -191,3 +191,57 @@ describe('CodexAdapter handles both rollout format generations', () => {
     expect(unknown.every((e) => e.rawType?.startsWith('item_completed/') || e.rawType?.includes('/'))).toBe(true);
   });
 });
+
+describe('CodexAdapter bare rollout generation', () => {
+  /**
+   * A THIRD rollout generation, found on 20260902 in six real local rollouts of 21 to 1,546 records each, up to 1.9 MB.
+   * Every line was valid JSON and every one parsed to ZERO events, because the dispatch reads `record.payload.type` and a
+   * bare record has no `payload`. The records were not unrecognized - `message`, `reasoning`, `function_call` and
+   * `function_call_output` were all already implemented. They were simply never reached.
+   *
+   * The fixture is SYNTHESIZED rather than harvested: all six real rollouts contain work against a company repository.
+   */
+  it('parses bare top-level records with no envelope', async () => {
+    const session = await adapter.parse(discovered('10-bare-generation') as never);
+    const kinds = session.events.map((e) => e.kind);
+    expect(kinds).toContain('message.user');
+    expect(kinds).toContain('message.assistant');
+    expect(kinds).toContain('reasoning');
+    expect(kinds).toContain('tool.call');
+    expect(kinds).toContain('tool.result');
+  });
+
+  it('reports no empty-session diagnostic for a bare rollout that has content', async () => {
+    // The regression itself: this file used to produce zero events and an "empty-session" warning, which is
+    // indistinguishable from a genuinely aborted session.
+    const session = await adapter.parse(discovered('10-bare-generation') as never);
+    expect(session.events.length).toBeGreaterThan(0);
+    expect(session.diagnostics.map((d) => d.code)).not.toContain('empty-session');
+  });
+
+  it('pairs a bare function_call with its output', async () => {
+    const session = await adapter.parse(discovered('10-bare-generation') as never);
+    const call = session.events.find((e) => e.kind === 'tool.call');
+    const result = session.events.find((e) => e.kind === 'tool.result');
+    expect(call?.correlationId).toBeDefined();
+    expect(result?.correlationId).toBe(call?.correlationId);
+  });
+
+  it('skips content-free state markers but records that it did', async () => {
+    // Framing, not content: 23 bytes, no payload, one per item. Emitting them as unknown events would interleave a
+    // placeholder with every real event. Skipping is only acceptable because the count is reported.
+    const session = await adapter.parse(discovered('10-bare-generation') as never);
+    expect(session.events.some((e) => e.kind === 'provider.unknown' && e.rawType?.includes('record_type'))).toBe(false);
+    const diag = session.diagnostics.find((d) => d.code === 'state-markers-skipped');
+    expect(diag).toBeDefined();
+    expect(diag?.message).toContain('5');
+  });
+
+  it('still preserves a genuinely unrecognized bare record', async () => {
+    // The skip above must not become a general licence to drop. An unknown record in the same file survives.
+    const session = await adapter.parse(discovered('10-bare-generation') as never);
+    const unknown = session.events.filter((e) => e.kind === 'provider.unknown');
+    expect(unknown).toHaveLength(1);
+    expect(unknown[0].rawType).toContain('totally_new_record_kind');
+  });
+});

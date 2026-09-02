@@ -1,0 +1,12 @@
+{"id":"00000000-0000-4000-8000-100000000000","timestamp":"2025-09-10T03:41:17.950Z","instructions":null}
+{"record_type":"state"}
+{"type":"message","role":"user","content":[{"type":"input_text","text":"list the files"}]}
+{"record_type":"state"}
+{"type":"reasoning","summary":[{"type":"summary_text","text":"The user wants a directory listing."}]}
+{"record_type":"state"}
+{"type":"function_call","name":"shell","arguments":"{\"command\":[\"bash\",\"-lc\",\"ls\"]}","call_id":"call_bare_1"}
+{"record_type":"state"}
+{"type":"function_call_output","call_id":"call_bare_1","output":"{\"output\":\"README.md\\n\",\"metadata\":{\"exit_code\":0}}"}
+{"record_type":"state"}
+{"type":"message","role":"assistant","content":[{"type":"output_text","text":"There is one file: README.md"}]}
+{"type":"totally_new_record_kind","note":"must survive as provider.unknown"}

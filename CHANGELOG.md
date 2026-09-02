@@ -4,6 +4,7 @@ Durable project and governance history. Append entries; do not rewrite historica
 
 ## Contents
 
+- [20260902_1540 — M5 defect: a third Codex rollout generation](#20260902_1540-m5-defect-a-third-codex-rollout-generation)
 - [20260902_1030 — Codex and Hermes wired to the webview](#20260902_1030-codex-and-hermes-wired-to-the-webview)
 - [20260902_1010 — Event projection](#20260902_1010-event-projection)
 - [20260902_0900 — Extension Development Host](#20260902_0900-extension-development-host)
@@ -23,6 +24,48 @@ Durable project and governance history. Append entries; do not rewrite historica
 - [20260901_1800](#20260901_1800)
 - [20260901_1745](#20260901_1745)
 - [20260901_1708](#20260901_1708)
+
+---
+
+## 20260902_1540 — M5 defect: a third Codex rollout generation
+
+Six Codex rollouts parsed to zero events. The working assumption was that they were aborted sessions. They were not: every one was a complete, well-formed rollout of a rollout generation the adapter
+could not read. Six of 723 in the local store, 21 to 1,546 records each, up to 1.9 MB, every line valid JSON, every file ending cleanly. All six classified UNSUPPORTED_FORMAT from raw-file evidence;
+full table in [docs/runtime-render-gate.md](docs/runtime-render-gate.md).
+
+### The defect
+
+The envelope generations wrap each item as `{type: 'response_item', payload: {...}}`. This generation has no envelope: each line IS the item at the top level, preceded by a bare `{id, timestamp,
+instructions}` header and interleaved with `{"record_type":"state"}` markers. The parser dispatches on `record.payload.type`, `undefined` on a bare record, so every record reached a `default` arm
+guarded by `if (payloadType)` and was discarded without a trace.
+
+The record kinds were all already implemented — `message`, `reasoning`, `function_call`, `function_call_output`. They were never reached. The fix is an unwrap, not new parsing.
+
+| Defect                                                           | Fix                                                                                                                               |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| A whole rollout generation parsed to nothing                     | Unwrap a bare record and treat it as its own payload                                                                              |
+| `if (payloadType)` dropped any record without a type, in silence | Removed. A record that was read and parsed exists whether or not its shape is understood; that guard defeated the unknown-event   |
+|                                                                  |   mechanism for precisely the records that needed it                                                                              |
+
+### Why this was worth chasing rather than assuming
+
+An adapter that returns nothing and a session that contains nothing produce the same screen. The `empty-session` diagnostic said "no parseable records in rollout", which was true and useless: it
+described the parser's result, not the file. Nothing in the static gates could have found this — 156 tests and 298 checks all pass on a store where six sessions were silently unreadable.
+
+### Result
+
+723 rollouts scanned: **0 now parse to zero events**, down from 6. The six yield 11 to 828 events each, with `tool.call` and `tool.result` matching exactly, 237/237 on the largest.
+
+### One judgement recorded rather than assumed
+
+`{"record_type":"state"}` is framing — 23 bytes, no payload, byte-identical, one per item, 718 in a single rollout. It is skipped, and the count reported as a `state-markers-skipped` diagnostic. This
+is not the silent drop the unknown-event rule forbids: that rule protects records that are not understood, and this one is understood exactly. Emitting it would put a placeholder beside every real
+event in the timeline.
+
+### Validation
+
+156 tests, up from 151. Five new over a SYNTHESIZED fixture — synthesized because all six real rollouts contain work against a company repository. Three of the five proven able to fail by reverting
+the unwrap. All Claude parity snapshots unchanged; five gates pass; checks 298.
 
 ---
 

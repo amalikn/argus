@@ -118,6 +118,7 @@ export async function parseRolloutIncremental(
   // Bytes of complete lines consumed, which is what a resume may safely start from.
   let consumed = options.fromOffset ?? 0;
   let malformed = 0;
+  let stateMarkers = 0;
   let sawExec = false;
   let sawExecOutput = false;
   let sawPatch = false;
@@ -127,6 +128,10 @@ export async function parseRolloutIncremental(
   let sawSubagent = false;
   let contextWindow: number | undefined;
   let latestUsage: TokenCountPayload['info'] | undefined;
+
+  // The outer discriminants of the ENVELOPE generations. A top-level `type` outside this set means the line is a bare
+  // item from the oldest generation rather than an envelope, and must be read as its own payload.
+  const ENVELOPE_TYPES = new Set(['session_meta', 'response_item', 'event_msg', 'turn_context', 'compacted']);
 
   // A function_call and its function_call_output are separated by other records and correlated by call_id.
   const pendingCalls = new Map<string, string>();
@@ -171,8 +176,41 @@ export async function parseRolloutIncremental(
       timestamp: record.timestamp,
       rawType: `${record.type ?? '?'}/${(record.payload as any)?.type ?? ''}`,
     };
-    const payload = (record.payload ?? {}) as Record<string, unknown>;
+    // THREE rollout generations, not two.
+    //
+    // The envelope generations wrap every item: `{type: 'response_item'|'event_msg'|..., payload: {...}}`. The oldest
+    // generation observed locally - written through at least 2025-09-12 - has no envelope at all. Each line IS the item:
+    // `{"type":"message", "role":"assistant", "content":[...]}` sitting at the top level, preceded by a bare header line
+    // `{"id","timestamp","instructions"}` and interleaved with `{"record_type":"state"}` markers.
+    //
+    // Found on 20260902: six rollouts in the local store, 21 to 1,546 records each and up to 1.9 MB, every line valid JSON,
+    // parsed to ZERO events. The dispatch below reads `record.payload.type`, which on a bare record is undefined, so every
+    // record fell through. Unwrapping here means the existing cases handle them unchanged - `message`, `reasoning`,
+    // `function_call` and `function_call_output` were already implemented and were simply never reached.
+    const bare = record.payload === undefined && typeof record.type === 'string' && !ENVELOPE_TYPES.has(record.type);
+    const payload = (bare ? (record as unknown as Record<string, unknown>) : ((record.payload ?? {}) as Record<string, unknown>));
     const payloadType = typeof payload.type === 'string' ? payload.type : undefined;
+
+    // `{"record_type":"state"}` is framing, not content: 23 bytes, no payload, byte-identical every time, emitted once per
+    // item - 718 of them in one 1.9 MB rollout observed on 20260902.
+    //
+    // Skipping it is NOT the silent drop the unknown-event rule forbids. That rule protects records we do not UNDERSTAND,
+    // so that a provider adding a type cannot make a session quietly under-report. This record is understood exactly: it
+    // carries no information at all. Emitting it as `provider.unknown` would be faithful in the letter and destructive in
+    // practice, interleaving a placeholder line 1:1 with every real event in the timeline. The count is recorded as a
+    // diagnostic instead, so the skip is visible evidence rather than an assumption.
+    if (!bare && record.type === undefined && typeof (record as any).record_type === 'string') {
+      stateMarkers += 1;
+      continue;
+    }
+
+    // The bare generation opens with a header carrying the session id and start time and no `type` at all.
+    if (!bare && record.type === undefined && typeof (record as any).id === 'string' && 'instructions' in (record as any)) {
+      const header = record as unknown as { timestamp?: string; git?: { repository_url?: string; branch?: string } };
+      session.startedAt = session.startedAt ?? header.timestamp;
+      events.push({ ...base, kind: 'session.lifecycle', phase: 'start', confidence: 'exact' });
+      continue;
+    }
 
     if (record.type === 'session_meta') {
       const meta = payload as SessionMetaPayload;
@@ -448,9 +486,12 @@ export async function parseRolloutIncremental(
 
       default:
         // Unknown records are DATA. A provider that ships a new event type must not break the session.
-        if (payloadType) {
-          events.push({ ...base, kind: 'provider.unknown', payload, confidence: 'exact' });
-        }
+        //
+        // This was previously guarded by `if (payloadType)`, which meant a record with no recognizable type was
+        // discarded in silence rather than preserved - defeating, for exactly the records that need it most, the
+        // mechanism that exists to make an unrecognized record visible. A record that reached this point was read from
+        // the store and parsed as JSON, so its existence is a fact regardless of whether its shape is understood.
+        events.push({ ...base, kind: 'provider.unknown', payload, confidence: 'exact' });
         break;
     }
   }
@@ -462,6 +503,13 @@ export async function parseRolloutIncremental(
       severity: 'warning',
       code: 'malformed-lines',
       message: `${malformed} line(s) could not be parsed and were skipped`,
+    });
+  }
+  if (stateMarkers > 0) {
+    diagnostics.push({
+      severity: 'info',
+      code: 'state-markers-skipped',
+      message: `${stateMarkers} bare "record_type" framing record(s) carried no content and were not emitted as events`,
     });
   }
   if (events.length === 0) {

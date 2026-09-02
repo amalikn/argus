@@ -180,3 +180,41 @@ to collect.
 
 **Open question, not yet a finding.** Six of forty sampled Codex rollouts parse to no records at all. That is plausibly correct — an aborted session leaves an empty rollout — but it has not been
 confirmed against the files, and an adapter silently returning nothing looks identical to a session that genuinely contains nothing. Worth one look before the render gate is run.
+
+### 20260902_1540 — the six empty Codex rollouts, classified
+
+All six were classified from raw-file evidence. **None was empty.** The open question resolved into an M5 defect.
+
+| File          | Size     | Records | JSON parses | Ends clean | `session_meta` | `response_item` | Classification     |
+| ------------- | -------- | ------- | ----------- | ---------- | -------------- | --------------- | ------------------ |
+| `...4649c3ac` | 1,055 KB | 774     | all         | yes        | no             | no              | UNSUPPORTED_FORMAT |
+| `...8e7b127b` | 290 KB   | 166     | all         | yes        | no             | no              | UNSUPPORTED_FORMAT |
+| `...0543a78d` | 31 KB    | 21      | all         | yes        | no             | no              | UNSUPPORTED_FORMAT |
+| `...b8af4091` | 1,885 KB | 1,546   | all         | yes        | no             | no              | UNSUPPORTED_FORMAT |
+| `...46991cc4` | 39 KB    | 46      | all         | yes        | no             | no              | UNSUPPORTED_FORMAT |
+| `...e3b767cc` | 112 KB   | 77      | all         | yes        | no             | no              | UNSUPPORTED_FORMAT |
+
+Every file was complete and well formed. Their first three record types were `id+timestamp+instructions`, `record_type`, `message`; their last three were the same shapes. All contained `message`,
+`reasoning`, `function_call` and `function_call_output`.
+
+**A third rollout generation.** The envelope generations wrap each item as `{type: 'response_item', payload: {...}}`. This one has no envelope: each line IS the item, at the top level, preceded by a
+bare `{id, timestamp, instructions}` header and interleaved with `{"record_type":"state"}` markers. The parser dispatches on `record.payload.type`, which is `undefined` on a bare record, so every
+record fell through to a `default` arm guarded by `if (payloadType)` — and was discarded in silence. The record kinds were all already implemented. They were never reached.
+
+Two defects, one fix each:
+
+| Defect                                                        | Fix                                                                                                                                  |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| A whole rollout generation parsed to nothing                  | Unwrap a bare record and treat it as its own payload. The existing cases then handle it unchanged                                    |
+| `if (payloadType)` silently dropped any record without a type | Removed. A record that was read and parsed exists, whether or not its shape is understood — that guard defeated the unknown-event    |
+|                                                               |   mechanism for exactly the records that needed it                                                                                   |
+
+**Result across the whole store:** 723 rollouts scanned, **0 now parse to zero events**, down from 6. The six now yield 11 to 828 events each, with `tool.call` and `tool.result` counts matching
+exactly (237/237 on the largest).
+
+**One judgement recorded rather than assumed.** `{"record_type":"state"}` is 23 bytes, byte-identical every time, with no payload, emitted once per item — 718 of them in the 1.9 MB rollout. These are
+skipped rather than emitted as unknown events, and the count is reported as a `state-markers-skipped` diagnostic. That is not the silent drop the unknown-event rule forbids: the rule protects records
+that are not UNDERSTOOD, and this one is understood exactly — it carries no information. Emitting it would put a placeholder line beside every real event in the timeline.
+
+Regression coverage: five tests over a SYNTHESIZED fixture, `tests/fixtures/codex/10-bare-generation.jsonl`. Synthesized, not harvested, because all six real rollouts contain work against a company
+repository. Three of the five were proven able to fail by reverting the unwrap.
