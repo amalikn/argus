@@ -1,3 +1,4 @@
+# Machine-readable context map: this project's governance files, routing, update rules and generated outputs (skill-ai-it).
 version: 1
 project:
   name: '{{PROJECT_SLUG}}'
