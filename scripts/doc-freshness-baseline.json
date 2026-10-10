@@ -26,7 +26,7 @@
  "no-header:tests/fixtures/hermes/session_20260901_000000_MISMATCH.json": "2026-10-10",
  "no-header:tsconfig.integration.json": "2026-10-10",
  "no-header:tsconfig.json": "2026-10-10",
- "over-budget:CHANGELOG.md": "lines=249 bytes=20799 CHANGELOG.md: over its budget of 200 lines, 25 KB",
+ "over-budget:CHANGELOG.md": "lines=205 bytes=16630 CHANGELOG.md: over its budget of 200 lines, 25 KB",
  "review-due:AGENTS.md": "2026-10-10",
  "review-due:docs/runtime-render-gate.md": "2026-10-10",
  "superseded-in-place:.archcore/adr/hermes-evidence-source.adr.md": "2026-10-10"
