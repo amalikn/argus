@@ -96,6 +96,8 @@ through Milestone 8 — every quality gate in this fork is static and none of th
 - Model pricing is a build-time asset. Refresh it with `just pricing-refresh`; never fetch pricing at runtime.
 - Time-bound documents use `<slug>-YYYYMMDD_hhmm.md`. Stable entrypoints keep their names.
 - Milestones halt at their stop gates. Do not carry work past a stop without an explicit go.
+- **Triage, freshness and history:** `just docs <folder>` gives each file's status and summary from its header before you open it; `just stale` lists stale docs;
+  rotated CHANGELOG and SCRATCHPAD entries in `docs/history/` are not read by default: `just history <term>` searches them, `just history-show <stamp>` prints one.
 
 <!-- BEGIN MANAGED: skill-ai-it:navigation --> <!-- skill-ai-it-version: 2026-08-11-governance-checks-layer-v1 -->
 

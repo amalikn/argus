@@ -18,6 +18,7 @@ mise    := "/opt/homebrew/bin/mise"
 bash    := "/opt/homebrew/bin/bash"
 venv    := cache / "venv"
 python  := venv / "bin/python"
+ai_it := "/Volumes/Data/_ai/_skills/skills_stuff/specialists/project/skill-ai-it"
 # Interpreter used ONLY to create the venv. Everything afterwards goes through {{python}}.
 python_bootstrap := "/opt/homebrew/opt/python@3.14/bin/python3.14"
 
@@ -161,6 +162,28 @@ fixtures-verify: _require-venv
 # Governance coherence checks. Must exit 0 before durable work is called complete.
 check: _require-venv
     {{python}} scripts/check_governance.py
+    @{{python}} "{{ai_it}}/scripts/doc_freshness.py" --project-root . --check
+
+# Session preflight: list stale docs by rule (review due, superseded outside archive/, a Depends on file changed). Read-only.
+stale: _require-venv
+    @{{python}} "{{ai_it}}/scripts/doc_freshness.py" --project-root .
+
+# Triage: one line per file (status, review date, summary) from its header, so a file is judged without being opened
+docs *ARGS: _require-venv
+    @{{python}} "{{ai_it}}/scripts/file_headers.py" --project-root . {{ARGS}}
+
+# Rotated history on demand: `just history <term>` searches the CHANGELOG archives (SCRATCHPAD: `just history <term> SCRATCHPAD.md`)
+history TERM RECORD="CHANGELOG.md": _require-venv
+    @{{python}} "{{ai_it}}/scripts/rotate_records.py" --project-root . --find "{{TERM}}" {{RECORD}}
+
+# Print one rotated entry by its stamp, when a live entry cites it: `just history-show 20260918_1200`
+history-show STAMP RECORD="CHANGELOG.md": _require-venv
+    @{{python}} "{{ai_it}}/scripts/rotate_records.py" --project-root . --show {{STAMP}} {{RECORD}}
+
+# Keep CHANGELOG and SCRATCHPAD within budget: plan by default; `just rotate --apply` (slurp runs it)
+rotate *ARGS: _require-venv
+    @{{python}} "{{ai_it}}/scripts/rotate_records.py" --project-root . {{ARGS}} CHANGELOG.md
+    @{{python}} "{{ai_it}}/scripts/rotate_records.py" --project-root . {{ARGS}} SCRATCHPAD.md
 
 # Show how far the fork has diverged from the recorded upstream baseline.
 diff-baseline:
