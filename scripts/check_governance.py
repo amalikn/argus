@@ -98,6 +98,7 @@ EXAMPLE_MARKER = "path:example"
 # toolchain rather than a broken reference. Registered with a per-entry reason rather than silently ignore-listed, so
 # the exemption stays reviewable — remove an entry the day the artifact appears. Tune per project.
 CONDITIONAL_PATHS: frozenset[str] = frozenset({
+    "graphify-out/GRAPH_REPORT.md",  # Graphify disabled, graphify-out/ deleted (operator, 2026-10-10); still named by the navigation block or history
     # Alternative task runners named by the managed navigation block. Only justfile exists here.
     "Taskfile.yml",
     "Makefile",
